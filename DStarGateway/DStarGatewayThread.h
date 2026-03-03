@@ -38,7 +38,7 @@
 #include "Defs.h"
 #include "Thread.h"
 
-class CDStarGatewayThread : public CThread{
+class CDStarGatewayThread : public CThread {
 public:
 	CDStarGatewayThread(const std::string& dataDir, const std::string& name);
 	virtual ~CDStarGatewayThread();
@@ -71,13 +71,15 @@ public:
 	virtual void setEchoEnabled(bool enabled);
 	virtual void setDTMFEnabled(bool enabled);
 	virtual void setDDModeEnabled(bool enabled);
-	virtual void setRemote(bool enabled, const std::string& password, unsigned int port);
+	virtual void setRemote(bool enabled);
 	virtual void setLocation(double latitude, double longitude);
 	virtual void setWhiteList(CCallsignList* list);
 	virtual void setBlackList(CCallsignList* list);
 	virtual void setRestrictList(CCallsignList* list);
 
 	virtual CDStarGatewayStatusData* getStatus() const;
+
+	virtual std::string processCommand(const std::string& command);
 
 	virtual void kill();
 	
@@ -122,8 +124,6 @@ private:
 	IRCDDB_STATUS             m_lastStatus;
 	CTimer                    m_statusTimer2;
 	bool                      m_remoteEnabled;
-	std::string                  m_remotePassword;
-	unsigned int              m_remotePort;
 	CRemoteHandler*           m_remote;
 	CTimer                    m_statusFileTimer;
 	std::string                  m_status1;

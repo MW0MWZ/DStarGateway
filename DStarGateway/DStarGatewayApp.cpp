@@ -124,9 +124,13 @@ int main(int argc, char *argv[])
 	TMQTT mqttConf;
 	config->getMQTT(mqttConf);
 
+	// Setup Remote
+	TRemote remoteConf;
+	config->getRemote(remoteConf);
+
 	std::vector<std::pair<std::string, void (*)(const unsigned char*, unsigned int)>> subscriptions;
-	// if (m_conf.getRemoteCommandsEnabled())
-	//	subscriptions.push_back(std::make_pair("command", CDStarGatewayApp::onCommand));
+	if (remoteConf.enabled)
+		subscriptions.push_back(std::make_pair("command", CDStarGatewayApp::onCommand));
 
 	m_mqtt = new CMQTTConnection(mqttConf.address, mqttConf.port, mqttConf.name, mqttConf.authenticate, mqttConf.username, mqttConf.password, subscriptions, mqttConf.keepalive);
 	bool ret = m_mqtt->open();
@@ -387,8 +391,8 @@ bool CDStarGatewayApp::createThread()
 	// Setup Remote
 	TRemote remoteConfig;
 	m_config->getRemote(remoteConfig);
-	LogInfo("Remote enabled: %d, port %u", int(remoteConfig.enabled), remoteConfig.port);
-	m_thread->setRemote(remoteConfig.enabled, remoteConfig.password, remoteConfig.port);
+	LogInfo("Remote enabled: %d", int(remoteConfig.enabled));
+	m_thread->setRemote(remoteConfig.enabled);
 
 	// Get final things ready
 	m_thread->setIcomRepeaterHandler(repeaterProtocolFactory.getIcomProtocolHandler());
@@ -461,3 +465,15 @@ void CDStarGatewayApp::terminateHandler()
 #endif
 	exit(2);
 }
+
+void CDStarGatewayApp::onCommand(const unsigned char* command, unsigned int length)
+{
+	assert(g_app != nullptr);
+	assert(g_app->m_thread != nullptr);
+	assert(command != nullptr);
+
+	std::string reply = g_app->m_thread->processCommand(std::string((char*)command, length));
+	if (!reply.empty())
+		m_mqtt->publish("response", reply);
+}
+

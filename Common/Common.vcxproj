@@ -183,7 +183,6 @@
     <ClInclude Include="ReflectorCallback.h" />
     <ClInclude Include="RemoteHandler.h" />
     <ClInclude Include="RemoteLinkData.h" />
-    <ClInclude Include="RemoteProtocolHandler.h" />
     <ClInclude Include="RemoteRepeaterData.h" />
     <ClInclude Include="RemoteUser.h" />
     <ClInclude Include="RepeaterCache.h" />
@@ -246,7 +245,6 @@
     <ClCompile Include="PollData.cpp" />
     <ClCompile Include="RemoteHandler.cpp" />
     <ClCompile Include="RemoteLinkData.cpp" />
-    <ClCompile Include="RemoteProtocolHandler.cpp" />
     <ClCompile Include="RemoteRepeaterData.cpp" />
     <ClCompile Include="RemoteUser.cpp" />
     <ClCompile Include="RepeaterCache.cpp" />

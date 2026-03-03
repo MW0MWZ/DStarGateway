@@ -39,7 +39,7 @@ export LDFLAGS+= -lgps
 endif
 
 .PHONY: all
-all: DStarGateway/dstargateway  DGWRemoteControl/dgwremotecontrol DGWTextTransmit/dgwtexttransmit DGWTimeServer/dgwtimeserver DGWVoiceTransmit/dgwvoicetransmit #tests
+all: DStarGateway/dstargateway DGWTextTransmit/dgwtexttransmit DGWTimeServer/dgwtimeserver DGWVoiceTransmit/dgwvoicetransmit #tests
 
 APRS/APRS.a: BaseCommon/BaseCommon.a FORCE
 	$(MAKE) -C APRS
@@ -55,9 +55,6 @@ DStarBase/DStarBase.a: BaseCommon/BaseCommon.a FORCE
 
 DStarGateway/dstargateway :  VersionInfo/GitVersion.h $(OBJS) APRS/APRS.a Common/Common.a DStarBase/DStarBase.a IRCDDB/IRCDDB.a BaseCommon/BaseCommon.a FORCE
 	$(MAKE) -C DStarGateway
-
-DGWRemoteControl/dgwremotecontrol: VersionInfo/GitVersion.h $(OBJS) DStarBase/DStarBase.a BaseCommon/BaseCommon.a FORCE
-	$(MAKE) -C DGWRemoteControl
 
 DGWTextTransmit/dgwtexttransmit: VersionInfo/GitVersion.h $(OBJS) DStarBase/DStarBase.a BaseCommon/BaseCommon.a FORCE
 	$(MAKE) -C DGWTextTransmit
@@ -80,7 +77,6 @@ clean:
 	$(MAKE) -C APRS clean
 	$(MAKE) -C BaseCommon clean
 	$(MAKE) -C Common clean
-	$(MAKE) -C DGWRemoteControl clean
 	$(MAKE) -C DGWTextTransmit clean
 	$(MAKE) -C DGWTimeServer clean
 	$(MAKE) -C DGWVoiceTransmit clean
@@ -94,7 +90,6 @@ clean:
 .PHONY: install
 install : DStarGateway/dstargateway DGWRemoteControl/dgwremotecontrol
 # install accessories
-	$(MAKE) -C DGWRemoteControl install
 	$(MAKE) -C DGWTextTransmit install
 	$(MAKE) -C DGWTimeServer install
 	$(MAKE) -C DGWVoiceTransmit install

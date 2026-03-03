@@ -155,9 +155,6 @@
     <ClInclude Include="RemoteLinkData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RemoteProtocolHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RemoteRepeaterData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -338,9 +335,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RemoteLinkData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RemoteProtocolHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RemoteRepeaterData.cpp">

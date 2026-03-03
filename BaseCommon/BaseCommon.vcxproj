@@ -131,7 +131,6 @@
     <ClInclude Include="NetUtils.h" />
     <ClInclude Include="ProgramArgs.h" />
     <ClInclude Include="RingBuffer.h" />
-    <ClInclude Include="SHA256.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="TCPReaderWriterClient.h" />
     <ClInclude Include="TCPReaderWriterServer.h" />
@@ -148,7 +147,6 @@
     <ClCompile Include="MQTTConnection.cpp" />
     <ClCompile Include="NetUtils.cpp" />
     <ClCompile Include="ProgramArgs.cpp" />
-    <ClCompile Include="SHA256.cpp" />
     <ClCompile Include="StringUtils.cpp" />
     <ClCompile Include="TCPReaderWriterClient.cpp" />
     <ClCompile Include="TCPReaderWriterServer.cpp" />

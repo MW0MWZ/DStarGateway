@@ -22,6 +22,7 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
+#include <cassert>
 
 #include "DStarGatewayThread.h"
 #include "DStarGatewayDefs.h"
@@ -97,8 +98,6 @@ m_ddModeEnabled(false),
 m_lastStatus(IS_DISABLED),
 m_statusTimer2(1000U, 1U),		// 1 second
 m_remoteEnabled(false),
-m_remotePassword(),
-m_remotePort(0U),
 m_remote(NULL),
 m_statusFileTimer(1000U, 2U * 60U),		// 2 minutes
 m_status1(),
@@ -260,14 +259,8 @@ void* CDStarGatewayThread::Entry()
 	CCCSHandler::setHost(m_ccsHost);
 #endif
 
-	if (m_remoteEnabled && !m_remotePassword.empty() && m_remotePort > 0U) {
-		m_remote = new CRemoteHandler(m_remotePassword, m_remotePort, m_gatewayAddress);
-		bool res = m_remote->open();
-		if (!res) {
-			delete m_remote;
-			m_remote = NULL;
-		}
-	}
+	if (m_remoteEnabled)
+		m_remote = new CRemoteHandler;
 
 	CRepeaterHandler::startup();
 
@@ -310,9 +303,6 @@ void* CDStarGatewayThread::Entry()
 
 			if (m_ddModeEnabled)
 				processDD();
-
-			if (m_remote != NULL)
-				m_remote->process();
 
 			unsigned long ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()- timePoint).count();
 			timePoint = std::chrono::steady_clock::now();
@@ -406,12 +396,9 @@ void* CDStarGatewayThread::Entry()
 		delete m_dummyRepeaterHandler;
 	}
 
-	if (m_remote != NULL) {
-		m_remote->close();
-		delete m_remote;
-	}
+	delete m_remote;
 
-	if(m_outgoingAprsHandler != nullptr) {
+	if (m_outgoingAprsHandler != nullptr) {
 		m_outgoingAprsHandler->close();
 		delete m_outgoingAprsHandler;
 	}
@@ -605,17 +592,9 @@ void CDStarGatewayThread::setLocation(double latitude, double longitude)
 	m_longitude = longitude;
 }
 
-void CDStarGatewayThread::setRemote(bool enabled, const std::string& password, unsigned int port)
+void CDStarGatewayThread::setRemote(bool enabled)
 {
-	if (enabled) {
-		m_remoteEnabled  = true;
-		m_remotePassword = password;
-		m_remotePort     = port;
-	} else {
-		m_remoteEnabled  = false;
-		m_remotePassword = password;
-		m_remotePort     = REMOTE_DUMMY_PORT;
-	}
+	m_remoteEnabled = enabled;
 }
 
 void CDStarGatewayThread::setWhiteList(CCallsignList* list)
@@ -1156,3 +1135,11 @@ void CDStarGatewayThread::readStatusFile(const std::string& filename, unsigned i
 		var = text;
 	}
 }
+
+std::string CDStarGatewayThread::processCommand(const std::string& command)
+{
+	assert(m_remote != nullptr);
+	
+	return m_remote->process(command);
+}
+

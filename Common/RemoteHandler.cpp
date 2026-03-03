@@ -31,209 +31,226 @@
 #include "DCSHandler.h"
 #include "Log.h"
 
-CRemoteHandler::CRemoteHandler(const std::string& password, unsigned int port, const std::string& address) :
-m_password(password),
-m_handler(port, address),
-m_random(0U)
+CRemoteHandler::CRemoteHandler()
 {
-	assert(port > 0U);
-	assert(!password.empty());
 }
 
 CRemoteHandler::~CRemoteHandler()
 {
 }
 
-bool CRemoteHandler::open()
+std::string CRemoteHandler::process(const std::string& text)
 {
-	return m_handler.open();
-}
+	std::vector<std::string> m_tokens;
 
-void CRemoteHandler::process()
-{
-	RPH_TYPE type = m_handler.readType();
-	switch (type) {
-		case RPHT_LOGOUT:
-			m_handler.setLoggedIn(false);
-			LogInfo("Remote control user has logged out");
-			break;
-		case RPHT_LOGIN:
-			m_random = ::rand();
-			m_handler.sendRandom(m_random);
-			break;
-		case RPHT_HASH: {
-				LogDebug("Read Hash %X", m_random);
-				bool valid = m_handler.readHash(m_password, m_random);
-				if (valid) {
-					LogInfo("Remote control user has logged in");
-					m_handler.setLoggedIn(true);
-					m_handler.sendACK();
-				} else {
-					LogInfo("Remote control user has failed login authentication");
-					m_handler.setLoggedIn(false);
-					m_handler.sendNAK("Invalid password");
-				}
-			}
-			break;
-		case RPHT_CALLSIGNS:
-			sendCallsigns();
-			break;
-		case RPHT_REPEATER: {
-				std::string callsign = m_handler.readRepeater();
-				sendRepeater(callsign);
-			}
-			break;
+	std::string::size_type pos = 0;
+	std::string::size_type spc = 0;
+
+	do {
+		spc = text.find_first_of(" ", pos);
+		if (spc == std::string::npos) {
+			m_tokens.push_back(text.substr(pos));
+		} else {
+			m_tokens.push_back(text.substr(pos, spc));
+			pos = spc + 1;
+		}
+	} while (spc != std::string::npos);
+
+	if (m_tokens.empty())
+		return "NAK No command received";
+
+	std::string command = m_tokens.at(0);
+
+	if (command == "Callsigns") {
+		return sendCallsigns();
+
+	} else if (command == "Repeater") {
+		if (m_tokens.size() < 2)
+			return "NAK No callsign received";
+
+		std::string callsign = m_tokens.at(1);
+		return sendRepeater(callsign);
+	}
+
 #ifdef USE_STARNET
-		case RPHT_STARNET: {
-				std::string callsign = m_handler.readStarNetGroup();
-				sendStarNetGroup(callsign);
-			}
-			break;
+	else if (command == "StarNet") {
+		if (m_tokens.size() < 2)
+			return "NAK No callsign received";
+
+		std::string callsign = m_tokens.at(1);
+		return sendStarNetGroup(callsign);
+	}
 #endif
-		case RPHT_LINK: {
-				std::string callsign, reflector;
-				RECONNECT reconnect;
-				m_handler.readLink(callsign, reconnect, reflector);
-				if (reflector.empty())
-					LogInfo("Remote control user requesting link \"%s\" to \"None\" with reconnect %s", callsign.c_str(), reconnectToString(reconnect));
-				else
-					LogInfo("Remote control user requesting link \"%s\" to \"%s\" with reconnect %s", callsign.c_str(), reflector.c_str(), reconnectToString(reconnect));
-				link(callsign, reconnect, reflector, true);
-			}
-			break;
-		case RPHT_UNLINK: {
-				std::string callsign, reflector;
-				PROTOCOL protocol;
-				m_handler.readUnlink(callsign, protocol, reflector);
-				LogInfo("Remote control user requesting unlink \"%s\" from \"%s\" for protocol %d", callsign.c_str(), reflector.c_str(), int(protocol));
-				unlink(callsign, protocol, reflector);
-			}
-			break;
-		case RPHT_LINKSCR: {
-				std::string callsign, reflector;
-				RECONNECT reconnect;
-				m_handler.readLinkScr(callsign, reconnect, reflector);
-				if (reflector.empty())
-					LogInfo("Remote control user requesting link \"%s\" to \"None\" with reconnect %s from localhost", callsign.c_str(), reconnectToString(reconnect));
-				else
-					LogInfo("Remote control user requesting link \"%s\" to \"%s\" with reconnect %s from localhost", callsign.c_str(), reflector.c_str(), reconnectToString(reconnect));
-				link(callsign, reconnect, reflector, false);
-			}
-			break;
+
+	else if (command == "Link") {
+		if (m_tokens.size() < 4)
+			return "NAK No callsign and/or reconnect and/or reflector received";
+
+		std::string callsign  = m_tokens.at(1);
+		RECONNECT reconnect   = RECONNECT(std::stoi(m_tokens.at(2)));
+		std::string reflector = m_tokens.at(3);
+
+		if (reflector.empty())
+			LogInfo("Remote control user requesting link \"%s\" to \"None\" with reconnect %s", callsign.c_str(), reconnectToString(reconnect));
+		else
+			LogInfo("Remote control user requesting link \"%s\" to \"%s\" with reconnect %s", callsign.c_str(), reflector.c_str(), reconnectToString(reconnect));
+
+		return link(callsign, reconnect, reflector, true);
+
+	} else if (command == "Unlink") {
+		if (m_tokens.size() < 4)
+			return "NAK No callsign and/or protocol and/or reflector received";
+
+		std::string callsign  = m_tokens.at(1);
+		PROTOCOL protocol     = PROTOCOL(std::stoi(m_tokens.at(2)));
+		std::string reflector = m_tokens.at(3);
+
+		LogInfo("Remote control user requesting unlink \"%s\" from \"%s\" for protocol %d", callsign.c_str(), reflector.c_str(), int(protocol));
+		return unlink(callsign, protocol, reflector);
+
+	}
+
 #ifdef USE_STARNET
-		case RPHT_LOGOFF: {
-				std::string callsign, user;
-				m_handler.readLogoff(callsign, user);
-				LogInfo("Remote control user has logged off \"%s\" from \"%s\"", user.c_str(), callsign.c_str());
-				logoff(callsign, user);
-			}
-			break;
+	else if (command == "Logoff") {
+		if (m_tokens.size() < 3)
+			return "NAK No callsign and/or user received";
+
+		std::string callsign = m_tokens.at(1);
+		std::string user     = m_tokens.at(2);
+
+		m_handler.readLogoff(callsign, user);
+		LogInfo("Remote control user has logged off \"%s\" from \"%s\"", user.c_str(), callsign.c_str());
+		return logoff(callsign, user);
+	}
 #endif
-		default:
-			break;
+
+	else {
+		return "NAK Invalid command received";
 	}
 }
 
-void CRemoteHandler::close()
+std::string CRemoteHandler::sendCallsigns()
 {
-	m_handler.close();
-}
+	std::string response = "CAL";
 
-void CRemoteHandler::sendCallsigns()
-{
 	std::vector<std::string> repeaters = CRepeaterHandler::listDVRepeaters();
+	for (const auto& it : repeaters)
+		response += " R" + it;
 #if USE_STARNET
-	std::vector<std::string>  starNets  = CStarNetHandler::listStarNets();
-#else
-	std::vector<std::string>  starNets;
+	std::vector<std::string> starNets  = CStarNetHandler::listStarNets();
+	for (const auto& it : starNets)
+		response += " S" + it;
 #endif
 
-	m_handler.sendCallsigns(repeaters, starNets);
+	return response;
 }
 
-void CRemoteHandler::sendRepeater(const std::string& callsign)
+std::string CRemoteHandler::sendRepeater(const std::string& callsign)
 {
 	CRepeaterHandler* repeater = CRepeaterHandler::findDVRepeater(callsign);
-	if (repeater == NULL) {
+	if (repeater == nullptr) {
 		LogInfo("Remote requesting invalid repeater \"%s\"", callsign.c_str());
-		m_handler.sendNAK("Invalid repeater callsign");
-		return;
+		return "NAK Invalid repeater callsign";
 	}
 
+	std::string response = "RPT";
+
 	CRemoteRepeaterData* data = repeater->getInfo();
-	if (data != NULL) {
+	if (data != nullptr) {
 		CDExtraHandler::getInfo(repeater, *data);
 		CDPlusHandler::getInfo(repeater, *data);
 		CDCSHandler::getInfo(repeater, *data);
 #ifdef USE_CCS
 		CCCSHandler::getInfo(repeater, *data);
 #endif
+		char buffer[50U];
 
-		m_handler.sendRepeater(*data);
+		::sprintf(buffer, " %s %d %s", data->getCallsign().c_str(), data->getReconnect(), data->getReflector().c_str());
+		response += buffer;
+
+		for (unsigned int n = 0U; n < data->getLinkCount(); n++) {
+			CRemoteLinkData* link = data->getLink(n);
+
+			::sprintf(buffer, " %s %d %d %d %d", link->getCallsign().c_str(), link->getProtocol(), link->isLinked(), link->getDirection(), link->isDongle());
+			response += buffer;
+		}
 	}
 
 	delete data;
+
+	return response;
 }
 
 #ifdef USE_STARNET
-void CRemoteHandler::sendStarNetGroup(const std::string& callsign)
+std::string CRemoteHandler::sendStarNetGroup(const std::string& callsign)
 {
 	CStarNetHandler* starNet = CStarNetHandler::findStarNet(callsign);
-	if (starNet == NULL) {
-		m_handler.sendNAK("Invalid STARnet Group callsign");
-		return;
-	}
+	if (starNet == nullptr)
+		return "NAK Invalid STARnet Group callsign";
+
+	std::string response = "SNT";
 
 	CRemoteStarNetGroup* data = starNet->getInfo();
-	if (data != NULL)
-		m_handler.sendStarNetGroup(*data);
+	if (data != nullptr)
+		char buffer[50U];
+
+		::sprintf(buffer, " %s %s %d %d ", data->getCallsign().c_str(), data->getLogoff().c_str(), data->getTimer(), data->getTimeout());
+		response += buffer;
+
+		for (unsigned int n = 0U; n < data->.getUserCount(); n++) {
+			CRemoteStarNetUser& user = data->getUser(n);
+
+			::sprintf(buffer, "%s %d %d ", user.getCallsign().c_str(), user.getTimer(), user.getTimeout());
+			response += buffer;
+		}
+	}
 
 	delete data;
+
+	return response;
 }
 #endif
 
-void CRemoteHandler::link(const std::string& callsign, RECONNECT reconnect, const std::string& reflector, bool respond)
+std::string CRemoteHandler::link(const std::string& callsign, RECONNECT reconnect, const std::string& reflector, bool respond)
 {
 	CRepeaterHandler* repeater = CRepeaterHandler::findDVRepeater(callsign);
-	if (repeater == NULL) {
+	if (repeater == nullptr) {
 		LogInfo("Remote requesting link for invalid repeater \"%s\"", callsign.c_str());
-		m_handler.sendNAK("Invalid repeater callsign");
-		return;
+		return "NAK Invalid repeater callsign";
 	}
 
 	repeater->link(reconnect, reflector);
 
 	if (respond)
-	    m_handler.sendACK();
+		return "ACK";
+	else
+		return "";
 }
 
-void CRemoteHandler::unlink(const std::string& callsign, PROTOCOL protocol, const std::string& reflector)
+std::string CRemoteHandler::unlink(const std::string& callsign, PROTOCOL protocol, const std::string& reflector)
 {
 	CRepeaterHandler* repeater = CRepeaterHandler::findDVRepeater(callsign);
-	if (repeater == NULL) {
+	if (repeater == nullptr) {
 		LogInfo("Remote requesting unlink for invalid repeater \"%s\"", callsign.c_str());
-		m_handler.sendNAK("Invalid repeater callsign");
-		return;
+		return "NAK Invalid repeater callsign";
 	}
 
 	repeater->unlink(protocol, reflector);
 
-    m_handler.sendACK();
+	return "ACK";
 }
 
 #if USE_STARNET
-void CRemoteHandler::logoff(const std::string& callsign, const std::string& user)
+std::string CRemoteHandler::logoff(const std::string& callsign, const std::string& user)
 {
 	CStarNetHandler* starNet = CStarNetHandler::findStarNet(callsign);
-	if (starNet == NULL) {
-		m_handler.sendNAK("Invalid STARnet group callsign");
-		return;
-	}
+	if (starNet == nullptr)
+		return "NAK Invalid STARnet group callsign";
 
 	bool res = starNet->logoff(user);
 	if (!res)
-		m_handler.sendNAK("Invalid STARnet user callsign");
+		return "NAK Invalid STARnet user callsign";
 	else
-		m_handler.sendACK();
+		return "ACK";
 }
 #endif

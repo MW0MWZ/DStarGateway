@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2010,2011 by Jonathan Naylor G4KLX
+ *   Copyright (C) 2010,2011,2026 by Jonathan Naylor G4KLX
  *   Copyright (c) 2017,2018 by Thomas A. Early N7TAE
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -41,4 +41,7 @@ public:
 	static void sigHandlerExit(int sig);
 	static void sigHandlerUSR(int sig);
 	static void terminateHandler();
+
+	static void onCommand(const unsigned char* command, unsigned int length);
 };
+
