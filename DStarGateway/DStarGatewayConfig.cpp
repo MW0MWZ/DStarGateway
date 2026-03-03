@@ -110,10 +110,6 @@ bool CDStarGatewayConfig::loadXLX(const CConfig& cfg)
 bool CDStarGatewayConfig::loadRemote(const CConfig& cfg)
 {
 	bool ret = cfg.getValue("Remote Commands", "Enabled", m_remote.enabled, false);
-	ret = cfg.getValue("Remote Commands", "Port", m_remote.port, 1U, 65535U, 4242U) && ret;
-	ret = cfg.getValue("Remote Commands", "Password", m_remote.password, 0, 1024, "") && ret;
-
-	m_remote.enabled = m_remote.enabled && !m_remote.password.empty();
 
 	return ret;
 }

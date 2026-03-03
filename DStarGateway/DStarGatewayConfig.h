@@ -131,12 +131,9 @@ struct TXLX {
 	bool enabled;
 };
 
-struct TRemote {
-	bool         enabled;
-	unsigned int port;
-	std::string  login;
-	std::string  password;
-};
+typedef struct {
+	bool enabled;
+} TRemote;
 
 #ifdef USE_GPSD
 struct TGPSD {
