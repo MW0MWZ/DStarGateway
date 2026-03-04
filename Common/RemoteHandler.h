@@ -30,16 +30,19 @@ public:
 	std::string process(const std::string& text);
 
 private:
-	std::string sendCallsigns();
-	std::string sendRepeater(const std::string& callsign);
+	std::string sendCallsigns() const;
+	std::string sendRepeater(const std::string& callsign) const;
 #if USE_STARNET
-	std::string sendStarNetGroup(const std::string& callsign);
+	std::string sendStarNetGroup(const std::string& callsign) const;
 #endif
 	std::string link(const std::string& callsign, RECONNECT reconnect, const std::string& reflector, bool respond);
 	std::string unlink(const std::string& callsign, PROTOCOL protocol, const std::string& reflector);
 #if USE_STARNET
 	std::string logoff(const std::string& callsign, const std::string& user);
 #endif
+
+	std::string parseCallsignIn(const std::string& original) const;
+	std::string parseCallsignOut(const std::string& original) const;
 };
 
 #endif

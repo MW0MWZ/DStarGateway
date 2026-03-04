@@ -29,6 +29,7 @@
 #include "DPlusHandler.h"
 #include "DStarDefines.h"
 #include "DCSHandler.h"
+#include "Utils.h"
 #include "Log.h"
 
 CRemoteHandler::CRemoteHandler()
@@ -41,20 +42,7 @@ CRemoteHandler::~CRemoteHandler()
 
 std::string CRemoteHandler::process(const std::string& text)
 {
-	std::vector<std::string> m_tokens;
-
-	std::string::size_type pos = 0;
-	std::string::size_type spc = 0;
-
-	do {
-		spc = text.find_first_of(" ", pos);
-		if (spc == std::string::npos) {
-			m_tokens.push_back(text.substr(pos));
-		} else {
-			m_tokens.push_back(text.substr(pos, spc));
-			pos = spc + 1;
-		}
-	} while (spc != std::string::npos);
+	std::vector<std::string> m_tokens = CUtils::stringTokenizer(text);
 
 	if (m_tokens.empty())
 		return "NAK No command received";
@@ -68,7 +56,7 @@ std::string CRemoteHandler::process(const std::string& text)
 		if (m_tokens.size() < 2)
 			return "NAK No callsign received";
 
-		std::string callsign = m_tokens.at(1);
+		std::string callsign = parseCallsignIn(m_tokens.at(1));
 		return sendRepeater(callsign);
 	}
 
@@ -77,7 +65,7 @@ std::string CRemoteHandler::process(const std::string& text)
 		if (m_tokens.size() < 2)
 			return "NAK No callsign received";
 
-		std::string callsign = m_tokens.at(1);
+		std::string callsign = parseCallsignIn(m_tokens.at(1));
 		return sendStarNetGroup(callsign);
 	}
 #endif
@@ -86,9 +74,9 @@ std::string CRemoteHandler::process(const std::string& text)
 		if (m_tokens.size() < 4)
 			return "NAK No callsign and/or reconnect and/or reflector received";
 
-		std::string callsign  = m_tokens.at(1);
-		RECONNECT reconnect   = RECONNECT(std::stoi(m_tokens.at(2)));
-		std::string reflector = m_tokens.at(3);
+		std::string callsign  = parseCallsignIn(m_tokens.at(1));
+		RECONNECT reconnect   = stringToReconnect(m_tokens.at(2));
+		std::string reflector = parseCallsignIn(m_tokens.at(3));
 
 		if (reflector.empty())
 			LogInfo("Remote control user requesting link \"%s\" to \"None\" with reconnect %s", callsign.c_str(), reconnectToString(reconnect));
@@ -101,11 +89,11 @@ std::string CRemoteHandler::process(const std::string& text)
 		if (m_tokens.size() < 4)
 			return "NAK No callsign and/or protocol and/or reflector received";
 
-		std::string callsign  = m_tokens.at(1);
-		PROTOCOL protocol     = PROTOCOL(std::stoi(m_tokens.at(2)));
-		std::string reflector = m_tokens.at(3);
+		std::string callsign  = parseCallsignIn(m_tokens.at(1));
+		PROTOCOL protocol     = stringToProtocol(m_tokens.at(2));
+		std::string reflector = parseCallsignIn(m_tokens.at(3));
 
-		LogInfo("Remote control user requesting unlink \"%s\" from \"%s\" for protocol %d", callsign.c_str(), reflector.c_str(), int(protocol));
+		LogInfo("Remote control user requesting unlink \"%s\" from \"%s\" for protocol %s", callsign.c_str(), reflector.c_str(), protocolToString(protocol));
 		return unlink(callsign, protocol, reflector);
 
 	}
@@ -115,8 +103,8 @@ std::string CRemoteHandler::process(const std::string& text)
 		if (m_tokens.size() < 3)
 			return "NAK No callsign and/or user received";
 
-		std::string callsign = m_tokens.at(1);
-		std::string user     = m_tokens.at(2);
+		std::string callsign = parseCallsignIn(m_tokens.at(1));
+		std::string user     = parseCallsignIn(m_tokens.at(2));
 
 		m_handler.readLogoff(callsign, user);
 		LogInfo("Remote control user has logged off \"%s\" from \"%s\"", user.c_str(), callsign.c_str());
@@ -129,23 +117,23 @@ std::string CRemoteHandler::process(const std::string& text)
 	}
 }
 
-std::string CRemoteHandler::sendCallsigns()
+std::string CRemoteHandler::sendCallsigns() const
 {
-	std::string response = "CAL";
+	std::string response = "Callsigns";
 
 	std::vector<std::string> repeaters = CRepeaterHandler::listDVRepeaters();
 	for (const auto& it : repeaters)
-		response += " R" + it;
+		response += " R:" + parseCallsignOut(it);
 #if USE_STARNET
 	std::vector<std::string> starNets  = CStarNetHandler::listStarNets();
 	for (const auto& it : starNets)
-		response += " S" + it;
+		response += " S:" + parseCallsignOut(it);
 #endif
 
 	return response;
 }
 
-std::string CRemoteHandler::sendRepeater(const std::string& callsign)
+std::string CRemoteHandler::sendRepeater(const std::string& callsign) const
 {
 	CRepeaterHandler* repeater = CRepeaterHandler::findDVRepeater(callsign);
 	if (repeater == nullptr) {
@@ -153,7 +141,7 @@ std::string CRemoteHandler::sendRepeater(const std::string& callsign)
 		return "NAK Invalid repeater callsign";
 	}
 
-	std::string response = "RPT";
+	std::string response = "Repeater";
 
 	CRemoteRepeaterData* data = repeater->getInfo();
 	if (data != nullptr) {
@@ -165,13 +153,13 @@ std::string CRemoteHandler::sendRepeater(const std::string& callsign)
 #endif
 		char buffer[50U];
 
-		::sprintf(buffer, " %s %d %s", data->getCallsign().c_str(), data->getReconnect(), data->getReflector().c_str());
+		::sprintf(buffer, " %s %s %s", data->getCallsign().c_str(), reconnectToString(data->getReconnect()), data->getReflector().c_str());
 		response += buffer;
 
 		for (unsigned int n = 0U; n < data->getLinkCount(); n++) {
 			CRemoteLinkData* link = data->getLink(n);
 
-			::sprintf(buffer, " %s %d %d %d %d", link->getCallsign().c_str(), link->getProtocol(), link->isLinked(), link->getDirection(), link->isDongle());
+			::sprintf(buffer, " %s %s %d %s %d", link->getCallsign().c_str(), protocolToString(link->getProtocol()), int(link->isLinked()), directionToString(link->getDirection()), int(link->isDongle()));
 			response += buffer;
 		}
 	}
@@ -182,13 +170,13 @@ std::string CRemoteHandler::sendRepeater(const std::string& callsign)
 }
 
 #ifdef USE_STARNET
-std::string CRemoteHandler::sendStarNetGroup(const std::string& callsign)
+std::string CRemoteHandler::sendStarNetGroup(const std::string& callsign) const
 {
 	CStarNetHandler* starNet = CStarNetHandler::findStarNet(callsign);
 	if (starNet == nullptr)
 		return "NAK Invalid STARnet Group callsign";
 
-	std::string response = "SNT";
+	std::string response = "StarNet";
 
 	CRemoteStarNetGroup* data = starNet->getInfo();
 	if (data != nullptr)
@@ -254,3 +242,26 @@ std::string CRemoteHandler::logoff(const std::string& callsign, const std::strin
 		return "ACK";
 }
 #endif
+
+std::string CRemoteHandler::parseCallsignIn(const std::string& original) const
+{
+	std::string callsign = original;
+
+	CUtils::replaceChar(callsign, '_', ' ');
+
+	callsign.resize(LONG_CALLSIGN_LENGTH, ' ');
+
+	return callsign;
+}
+
+std::string CRemoteHandler::parseCallsignOut(const std::string& original) const
+{
+	std::string callsign = original;
+
+	CUtils::trim(callsign);
+
+	CUtils::replaceChar(callsign, ' ', '_');
+
+	return callsign;
+}
+

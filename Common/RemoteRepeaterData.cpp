@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2011 by Jonathan Naylor G4KLX
+ *   Copyright (C) 2011,2026 by Jonathan Naylor G4KLX
  *   Copyright (c) 2017 by Thomas A. Early N7TAE
  *   Copyright (c) 2021 by Geoffrey Merck F4FXL / KC3FRA
  *
@@ -47,9 +47,9 @@ std::string CRemoteRepeaterData::getCallsign() const
 	return m_callsign;
 }
 
-int32_t CRemoteRepeaterData::getReconnect() const
+RECONNECT CRemoteRepeaterData::getReconnect() const
 {
-	return int32_t(m_reconnect);
+	return m_reconnect;
 }
 
 std::string CRemoteRepeaterData::getReflector() const

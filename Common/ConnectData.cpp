@@ -464,7 +464,7 @@ unsigned int CConnectData::getDPlusData(unsigned char *data, unsigned int length
 					data[i] = 0x00;
 
 				std::string callsign = m_repeater;
-				CUtils::Trim(callsign);
+				CUtils::trim(callsign);
 
 				for (unsigned int i = 0U; i < callsign.size(); i++)
 					data[i + 4U] = callsign.at(i);

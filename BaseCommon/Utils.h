@@ -45,15 +45,15 @@ public:
 	static void			byteToBitsRev(unsigned char byte, bool* bits);
 	static std::string		latLonToLoc(double latitude, double longitude);
 	static void			clean(std::string& str, const std::string& allowed);
-	static std::string		ToUpper(std::string &str);
-	static std::string		ToLower(std::string &str);
-	static std::string		Trim(std::string &str);
-	static int			getAllIPV4Addresses(const char *name, unsigned short port, unsigned int *num, struct sockaddr_in *addr, unsigned int max_addr);
-	static void			safeStringCopy(char * dest, const char * src, unsigned int buf_size);
+	static std::string		toUpper(std::string& str);
+	static std::string		toLower(std::string& str);
+	static std::string		trim(std::string& str);
+	static int			getAllIPV4Addresses(const char* name, unsigned short port, unsigned int *num, struct sockaddr_in *addr, unsigned int max_addr);
+	static void			safeStringCopy(char* dest, const char* src, unsigned int buf_size);
 	static std::vector<std::string>	stringTokenizer(const std::string &s);
 	static std::string		getCurrentTime(void);
-	static void			ReplaceChar(std::string &str, char from, char to);
-	static time_t			parseTime(const std::string str);
+	static void			replaceChar(std::string& str, char from, char to);
+	static time_t			parseTime(const std::string& str);
 	static void			truncateFile(const std::string& fileName);
 	static std::string		createTimestamp();
 

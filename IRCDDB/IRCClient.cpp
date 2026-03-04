@@ -39,7 +39,7 @@ IRCClient::IRCClient(IRCApplication *app, const std::string& update_channel, con
 	CUtils::safeStringCopy(m_host_name, hostName.c_str(), sizeof m_host_name);
 
 	m_callsign = callsign;
-	CUtils::ToLower(m_callsign);
+	CUtils::toLower(m_callsign);
 	m_port = port;
 	m_password = password;
 	m_app = app;

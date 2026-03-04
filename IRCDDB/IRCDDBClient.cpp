@@ -249,7 +249,7 @@ bool CIRCDDBClient::findGateway(const std::string& gatewayCallsign)
 		return false;
 	}
 	std::string gw(gatewayCallsign);
-	CUtils::ToUpper(gw);
+	CUtils::toUpper(gw);
 	return m_d->m_app->findGateway(gw);
 }
 
@@ -261,7 +261,7 @@ bool CIRCDDBClient::findRepeater(const std::string& repeaterCallsign)
 		return false;
 	}
 	std::string rptr(repeaterCallsign);
-	CUtils::ToUpper(rptr);
+	CUtils::toUpper(rptr);
 	return m_d->m_app->findRepeater(rptr);
 }
 
@@ -274,7 +274,7 @@ bool CIRCDDBClient::findUser(const std::string& userCallsign)
 	}
 	LogDebug("IRC Find user %s", userCallsign.c_str());
 	std::string usr(userCallsign);
-	CUtils::ToUpper(usr);
+	CUtils::toUpper(usr);
 	return m_d->m_app->findUser(usr);
 }
 

@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2011 by Jonathan Naylor G4KLX
+ *   Copyright (C) 2011,2026 by Jonathan Naylor G4KLX
  *   Copyright (c) 2017 by Thomas A. Early N7TAE
  *   Copyright (c) 2021 by Geoffrey Merck F4FXL / KC3FRA
  *
@@ -38,22 +38,23 @@ std::string CRemoteLinkData::getCallsign() const
 	return m_callsign;
 }
 
-int32_t CRemoteLinkData::getProtocol() const
+PROTOCOL CRemoteLinkData::getProtocol() const
 {
-	return int32_t(m_protocol);
+	return m_protocol;
 }
 
-int32_t CRemoteLinkData::isLinked() const
+bool CRemoteLinkData::isLinked() const
 {
-	return m_linked ? 1 : 0;
+	return m_linked;
 }
 
-int32_t CRemoteLinkData::getDirection() const
+DIRECTION CRemoteLinkData::getDirection() const
 {
-	return int32_t(m_direction);
+	return m_direction;
 }
 
-int32_t CRemoteLinkData::isDongle() const
+bool CRemoteLinkData::isDongle() const
 {
-	return m_dongle ? 1 : 0;
+	return m_dongle;
 }
+

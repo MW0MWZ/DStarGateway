@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2011 by Jonathan Naylor G4KLX
+ *   Copyright (C) 2011,2026 by Jonathan Naylor G4KLX
  *   Copyright (c) 2017 by Thomas A. Early N7TAE
  *   Copyright (c) 2021 by Geoffrey Merck F4FXL / KC3FRA
  *
@@ -32,10 +32,10 @@ public:
 	~CRemoteLinkData();
 
 	std::string getCallsign() const;
-	int32_t     getProtocol() const;
-	int32_t     isLinked() const;
-	int32_t     getDirection() const;
-	int32_t     isDongle() const;
+	PROTOCOL    getProtocol() const;
+	bool        isLinked() const;
+	DIRECTION   getDirection() const;
+	bool        isDongle() const;
 
 private:
 	std::string  m_callsign;

@@ -266,7 +266,7 @@ std::string CUtils::latLonToLoc(double latitude, double longitude)
 	return std::string(locator);
 }
 
-void CUtils::clean(std::string &str, const std::string& allowed)
+void CUtils::clean(std::string& str, const std::string& allowed)
 {
 	for (unsigned int i = 0U; i < str.size(); i++) {
 		int n = allowed.find(str[i]);
@@ -275,44 +275,47 @@ void CUtils::clean(std::string &str, const std::string& allowed)
 	}
 }
 
-std::string CUtils::ToUpper(std::string &str)
+std::string CUtils::toUpper(std::string& str)
 {
-	for (auto it=str.begin(); it!=str.end(); it++) {
-		if (islower(*it))
-			*it = toupper(*it);
+	for (auto& it : str) {
+		if (islower(it))
+			it = toupper(it);
 	}
+
 	return str;
 }
 
-std::string CUtils::ToLower(std::string &str)
+std::string CUtils::toLower(std::string& str)
 {
-	for (auto it=str.begin(); it!=str.end(); it++) {
-		if (isupper(*it))
-			*it = tolower(*it);
+	for (auto& it : str) {
+		if (isupper(it))
+			it = tolower(it);
 	}
+
 	return str;
 }
 
-std::string CUtils::Trim(std::string &str)
+std::string CUtils::trim(std::string& str)
 {
-	while (str.size() && std::isspace(str[0]))
+	while (!str.empty() && std::isspace(str[0]))
 		str.erase(str.begin());
-	while (str.size() && std::isspace(str[str.size()-1]))
+
+	while (!str.empty() && std::isspace(str[str.size()-1]))
 		str.erase(--str.end());
+
 	return str;
 }
 
-void CUtils::ReplaceChar(std::string &str, char from, char to)
+void CUtils::replaceChar(std::string& str, char from, char to)
 {
-	for (auto it=str.begin(); it!=str.end(); it++) {
-		if (from == *it)
-			*it = to;
+	for (auto& it : str) {
+		if (from == it)
+			it = to;
 	}
 }
 
 int CUtils::getAllIPV4Addresses(const char *name, unsigned short port, unsigned int *num, struct sockaddr_in *addr, unsigned int max_addr)
 {
-
 	struct addrinfo hints;
 	struct addrinfo * res;
 
@@ -381,7 +384,7 @@ int CUtils::getAllIPV4Addresses(const char *name, unsigned short port, unsigned 
 	}
 }
 
-void CUtils::safeStringCopy(char *dest, const char *src, unsigned int buf_size)
+void CUtils::safeStringCopy(char* dest, const char* src, unsigned int buf_size)
 {
 	unsigned int i = 0;
 
@@ -404,7 +407,7 @@ std::string CUtils::getCurrentTime(void)
 	return std::string(buffer);
 }
 
-std::vector<std::string> CUtils::stringTokenizer(const std::string &s)
+std::vector<std::string> CUtils::stringTokenizer(const std::string& s)
 {
 	std::stringstream ss(s);
 	std::istream_iterator<std::string> it(ss);
@@ -413,7 +416,7 @@ std::vector<std::string> CUtils::stringTokenizer(const std::string &s)
 	return result;
 }
 
-time_t CUtils::parseTime(const std::string str)
+time_t CUtils::parseTime(const std::string& str)
 {
 	struct tm stm;
 	strptime(str.c_str(), "%Y-%m-%d %H:%M:%S", &stm);

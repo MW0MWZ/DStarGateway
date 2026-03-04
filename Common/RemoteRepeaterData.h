@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2011 by Jonathan Naylor G4KLX
+ *   Copyright (C) 2011,2026 by Jonathan Naylor G4KLX
  *   Copyright (c) 2017 by Thomas A. Early N7TAE
  *   Copyright (c) 2021 by Geoffrey Merck F4FXL / KC3FRA
  *
@@ -34,7 +34,7 @@ public:
 	void addLink(const std::string& callsign, PROTOCOL protocol, bool linked, DIRECTION direction, bool dongle);
 
 	std::string getCallsign() const;
-	int32_t     getReconnect() const;
+	RECONNECT   getReconnect() const;
 	std::string getReflector() const;
 
 	unsigned int getLinkCount() const;

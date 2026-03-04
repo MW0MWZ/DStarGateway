@@ -177,10 +177,10 @@ void IRCDDBApp::rptrQTH(const std::string& callsign, double latitude, double lon
 	while (std::regex_search(d2, sm, nonValid))
 		d2.erase(sm.position(0), sm.length());
 
-	CUtils::ReplaceChar(pos, ',', '.');
-	CUtils::ReplaceChar(d1, ' ', '_');
-	CUtils::ReplaceChar(d2, ' ', '_');
-	CUtils::ReplaceChar(cs, ' ', '_');
+	CUtils::replaceChar(pos, ',', '.');
+	CUtils::replaceChar(d1, ' ', '_');
+	CUtils::replaceChar(d2, ' ', '_');
+	CUtils::replaceChar(cs, ' ', '_');
 
 	std::lock_guard lochQTHURL(m_d->m_moduleQTHURLMutex);
 
@@ -205,12 +205,12 @@ void IRCDDBApp::rptrQTH(const std::string& callsign, double latitude, double lon
 void IRCDDBApp::rptrQRG(const std::string& callsign, double txFrequency, double duplexShift, double range, double agl)
 {
 	std::string cs = callsign;
-	CUtils::ReplaceChar(cs, ' ', '_');
+	CUtils::replaceChar(cs, ' ', '_');
 
 	char fstr[64];
 	snprintf(fstr, 64, "%011.5f %+010.5f %06.2f %06.1f", txFrequency, duplexShift, range / 1609.344, agl);
 	std::string f(fstr);
-	CUtils::ReplaceChar(f, ',', '.');
+	CUtils::replaceChar(f, ',', '.');
 
 	std::lock_guard lockModuleQRG(m_d->m_moduleQRGMutex);
 	m_d->m_moduleQRG[cs] = cs + std::string(" ") + f;
@@ -230,7 +230,7 @@ void IRCDDBApp::kickWatchdog(const std::string& callsign, const std::string& s)
 
 	if (text.size()) {
 		std::string cs = callsign;
-		CUtils::ReplaceChar(cs, ' ', '_');
+		CUtils::replaceChar(cs, ' ', '_');
 
 		std::lock_guard lockModuleWD(m_d->m_moduleWDMutex);
 		m_d->m_moduleWD[cs] = cs + std::string(" ") + text;
@@ -318,7 +318,7 @@ void IRCDDBApp::userJoin(const std::string& nick, const std::string& name, const
 	std::lock_guard lockUserMap(m_d->m_userMapMutex);
 
 	std::string lnick = nick;
-	CUtils::ToLower(lnick);
+	CUtils::toLower(lnick);
 
 	IRCDDBAppUserObject u(lnick, name, host);
 	u.m_usn = calculateUsn(lnick);
@@ -330,7 +330,7 @@ void IRCDDBApp::userJoin(const std::string& nick, const std::string& name, const
 
 		if ((hyphenPos >= 4) && (hyphenPos <= 6)) {
 			std::string gatewayCallsign = nick.substr(0, hyphenPos);
-			CUtils::ToUpper(gatewayCallsign);
+			CUtils::toUpper(gatewayCallsign);
 			gatewayCallsign.resize(7, ' ');
 			gatewayCallsign.push_back('G');
 
@@ -345,7 +345,7 @@ void IRCDDBApp::userJoin(const std::string& nick, const std::string& name, const
 void IRCDDBApp::userLeave(const std::string& nick)
 {
 	std::string lnick = nick;
-	CUtils::ToLower(lnick);
+	CUtils::toLower(lnick);
 
 	std::lock_guard lockUserMap(m_d->m_userMapMutex);
 	m_d->m_userMap.erase(lnick);
@@ -447,7 +447,7 @@ void IRCDDBApp::userChanOp(const std::string& nick, bool op)
 	std::lock_guard lockUserMap(m_d->m_userMapMutex);
 
 	std::string lnick = nick;
-	CUtils::ToLower(lnick);
+	CUtils::toLower(lnick);
 
 	if (m_d->m_userMap.count(lnick) == 1)
 		m_d->m_userMap[lnick].m_op = op;
@@ -460,9 +460,9 @@ std::string IRCDDBApp::getIPAddressFromCall(std::string& zonerp_cs)
 	unsigned int max_usn = 0;
 	std::string ipAddr;
 	std::string gw = zonerp_cs;
-	CUtils::ReplaceChar(gw, '_', ' ');
-	CUtils::ToLower(gw);
-	CUtils::Trim(gw);
+	CUtils::replaceChar(gw, '_', ' ');
+	CUtils::toLower(gw);
+	CUtils::trim(gw);
 
 	std::lock_guard lockUserMap(m_d->m_userMapMutex);
 	for (int j=1; j <= 4; j++) {
@@ -544,7 +544,7 @@ bool IRCDDBApp::findRepeater(const std::string& rptrCall)
 	}
 
 	std::string arearp_cs(rptrCall);
-	CUtils::ReplaceChar(arearp_cs, ' ',  '_');
+	CUtils::replaceChar(arearp_cs, ' ',  '_');
 
 	std::string s("NONE");
 	std::string zonerp_cs;
@@ -553,7 +553,7 @@ bool IRCDDBApp::findRepeater(const std::string& rptrCall)
 	if (1 == m_d->m_rptrMap.count(arearp_cs)) {
 		IRCDDBAppRptrObject o = m_d->m_rptrMap[arearp_cs];
 		zonerp_cs = o.m_zonerp_cs;
-		CUtils::ReplaceChar(zonerp_cs, '_', ' ');
+		CUtils::replaceChar(zonerp_cs, '_', ' ');
 		zonerp_cs.resize(7, ' ');
 		zonerp_cs.push_back('G');
 		s = o.m_zonerp_cs;
@@ -650,7 +650,7 @@ bool IRCDDBApp::findUser(const std::string& usrCall)
 
 	if (srv.size()>0 && m_d->m_state>=6 && q) {
 		std::string usr(usrCall);
-		CUtils::ReplaceChar(usr, ' ', '_');
+		CUtils::replaceChar(usr, ' ', '_');
 		IRCMessage * m =new IRCMessage(srv, std::string("FIND ") + usr);
 		q->putMessage(m);
 	} else {
@@ -713,7 +713,7 @@ bool IRCDDBApp::getNickForRepeater(const std::string& repeater, std::string& nic
 		return false;
 
 	auto lrepeater = repeater.substr(0, firstSpacePos);
-	CUtils::ToLower(lrepeater);
+	CUtils::toLower(lrepeater);
 	
 	for(unsigned int i = 1; i <= 4U; i++) {
 		nick = lrepeater + "-" + std::to_string(i);
@@ -828,8 +828,8 @@ void IRCDDBApp::doUpdate(std::string& msg)
 				if (m_d->m_initReady) {
 					std::string arearp_cs(key);
 					std::string zonerp_cs(value);
-					CUtils::ReplaceChar(arearp_cs, '_', ' ');
-					CUtils::ReplaceChar(zonerp_cs, '_', ' ');
+					CUtils::replaceChar(arearp_cs, '_', ' ');
+					CUtils::replaceChar(zonerp_cs, '_', ' ');
 					zonerp_cs.resize(7, ' ');
 					zonerp_cs.push_back('G');
 
@@ -845,8 +845,8 @@ void IRCDDBApp::doUpdate(std::string& msg)
 				std::string arearp_cs(value);
 				std::string zonerp_cs;
 				std::string ip_addr;
-				CUtils::ReplaceChar(userCallsign, '_', ' ');
-				CUtils::ReplaceChar(arearp_cs, '_', ' ');
+				CUtils::replaceChar(userCallsign, '_', ' ');
+				CUtils::replaceChar(arearp_cs, '_', ' ');
 
 				std::smatch sm1;
 				std::string nick;
@@ -857,7 +857,7 @@ void IRCDDBApp::doUpdate(std::string& msg)
 					// LogDebug("doUptate RPTR already present");
 					IRCDDBAppRptrObject o = m_d->m_rptrMap[value];
 					zonerp_cs = o.m_zonerp_cs;
-					CUtils::ReplaceChar(zonerp_cs, '_', ' ');
+					CUtils::replaceChar(zonerp_cs, '_', ' ');
 					zonerp_cs.resize(7, ' ');
 					ip_addr = nick.empty() ? getIPAddressFromCall(zonerp_cs) : getIPAddressFromNick(nick);
 					zonerp_cs.push_back('G');
@@ -940,7 +940,7 @@ void IRCDDBApp::msgQuery(IRCMessage *m)
 			doNotFound(restOfLine, callsign);
 
 			if (callsign.size() > 0) {
-				CUtils::ReplaceChar(callsign, '_', ' ');
+				CUtils::replaceChar(callsign, '_', ' ');
 				IRCMessage *m2 = new IRCMessage("IDRT_USER");
 				m2->addParam(callsign);
 				for (int i=0; i<4; i++)

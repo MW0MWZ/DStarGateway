@@ -61,10 +61,47 @@ inline const char* reconnectToString(RECONNECT r) {
     }
 }
 
+inline RECONNECT stringToReconnect(const std::string& s) {
+    if (s == "never")
+        return RECONNECT_NEVER;
+    else if (s == "fixed")
+        return RECONNECT_FIXED;
+    else if (s == "5")
+        return RECONNECT_5MINS;
+    else if (s == "10")
+        return RECONNECT_10MINS;
+    else if (s == "15")
+        return RECONNECT_15MINS;
+    else if (s == "20")
+        return RECONNECT_20MINS;
+    else if (s == "25")
+        return RECONNECT_25MINS;
+    else if (s == "30")
+        return RECONNECT_30MINS;
+    else if (s == "60")
+        return RECONNECT_60MINS;
+    else if (s == "90")
+        return RECONNECT_90MINS;
+    else if (s == "120")
+        return RECONNECT_120MINS;
+    else if (s == "180")
+        return RECONNECT_180MINS;
+    else
+        return RECONNECT(-1);
+}
+
 enum DIRECTION {
 	DIR_INCOMING,
 	DIR_OUTGOING
 };
+
+inline const char* directionToString(DIRECTION d) {
+    switch (d) {
+        case DIR_INCOMING: return "incoming";
+        case DIR_OUTGOING: return "outgoing";
+        default:           return "unknown";
+    }
+}
 
 enum PROTOCOL {
 	PROTO_DEXTRA,
@@ -72,6 +109,29 @@ enum PROTOCOL {
 	PROTO_DCS,
 	PROTO_CCS
 };
+
+inline const char* protocolToString(PROTOCOL p) {
+    switch (p) {
+        case PROTO_DEXTRA: return "DExtra";
+        case PROTO_DPLUS:  return "D-Plus";
+        case PROTO_DCS:    return "DCS";
+        case PROTO_CCS:    return "CCS";
+        default:           return "unknown";
+    }
+}
+
+inline PROTOCOL stringToProtocol(const std::string& s) {
+    if (s == "DExtra")
+        return PROTO_DEXTRA;
+    else if (s == "D-Plus")
+        return PROTO_DPLUS;
+    else if (s == "DCS")
+        return PROTO_DCS;
+    else if (s == "CCS")
+        return PROTO_CCS;
+    else
+        return PROTOCOL(-1);
+}
 
 enum HW_TYPE {
 	HW_HOMEBREW,

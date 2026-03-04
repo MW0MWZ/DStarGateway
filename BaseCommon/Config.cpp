@@ -33,9 +33,9 @@ m_filename(filename)
 
 CConfig::~CConfig()
 {
-    for(auto it = m_sections.begin(); it != m_sections.end(); it++) {
+    for(auto it = m_sections.begin(); it != m_sections.end(); it++)
         delete it->second;
-    }
+
     m_sections.clear();
 }
 
@@ -229,7 +229,7 @@ bool CConfig::getValue(const std::string &section, const std::string& key, std::
     if(getValue(section, key, valueTemp, 0U, 2048, defaultValue)) {
         for(auto s : allowedValues) {
             if(isSameNoCase(s, valueTemp)) {
-                value = CUtils::ToLower(valueTemp);
+                value = CUtils::toLower(valueTemp);
                 return true;
             }
         }

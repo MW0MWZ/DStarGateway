@@ -128,7 +128,7 @@ bool CDStarGatewayConfig::loadDPlus(const CConfig& cfg)
 	ret = cfg.getValue("D-Plus", "Login", m_dplus.login, 0, LONG_CALLSIGN_LENGTH, m_general.callsign) && ret;
 
 	m_dplus.enabled = m_dplus.enabled && !m_dplus.login.empty();
-	m_dplus.login = CUtils::ToUpper(m_dplus.login);
+	m_dplus.login = CUtils::toUpper(m_dplus.login);
 
 	return ret;
 }
@@ -345,7 +345,7 @@ bool CDStarGatewayConfig::loadGeneral(const CConfig& cfg)
 	else if (lang == "Norsk")			m_general.language = TL_NORSK;
 	else if (lang == "Portugues")		m_general.language = TL_PORTUGUES;
 
-	CUtils::ToUpper(m_general.callsign);
+	CUtils::toUpper(m_general.callsign);
 	CUtils::clean(m_general.description1, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,&*()-+=@/?:;");
 	CUtils::clean(m_general.description2, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,&*()-+=@/?:;");
 	CUtils::clean(m_general.url, 		  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,&*()-+=@/?:;");
