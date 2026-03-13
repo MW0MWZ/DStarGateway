@@ -1,10 +1,7 @@
 .PHONY: install
 install:
 	@install -d -g bin -o dstar -m 0775 $(DATA_DIR)
-	@install -g bin -o dstar -m 0664 CCS_Hosts.txt    $(DATA_DIR)
-	@install -g bin -o dstar -m 0664 DCS_Hosts.txt    $(DATA_DIR)
-	@install -g bin -o dstar -m 0664 DExtra_Hosts.txt $(DATA_DIR)
-	@install -g bin -o dstar -m 0664 DPlus_Hosts.txt  $(DATA_DIR)
+	@install -g bin -o dstar -m 0664 DStar_Hosts.json  $(DATA_DIR)
 	@install -g bin -o dstar -m 0664 TIME_de_DE.ambe  $(DATA_DIR)
 	@install -g bin -o dstar -m 0664 TIME_de_DE.indx  $(DATA_DIR)
 	@install -g bin -o dstar -m 0664 TIME_en_GB.ambe  $(DATA_DIR)

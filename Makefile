@@ -121,13 +121,11 @@ uninstall :
 	@rm -f $(BIN_DIR)/dstargateway
 #	@rm -f $(CFG_DIR)/dstargateway.cfg
 # Only remove folder content
-	@rm -f $(DATA_DIR)/* 
+	@rm -f $(DATA_DIR)/*
 
 .PHONY: removehostfiles
 removehostfiles :
-	@rm -f $(DATA_DIR)/DExtra_Hosts.txt
-	@rm -f $(DATA_DIR)/DCS_Hosts.txt
-	@rm -f $(DATA_DIR)/DPlus_Hosts.txt
+	@rm -f $(DATA_DIR)/DStar_Hosts.json
 
 .PHONY tests:
 tests : VersionInfo/GitVersion.h $(OBJS) APRS/APRS.a Common/Common.a DStarBase/DStarBase.a IRCDDB/IRCDDB.a BaseCommon/BaseCommon.a FORCE

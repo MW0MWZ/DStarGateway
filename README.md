@@ -17,7 +17,8 @@
       - [3.5.0.2. Debug Build](#3502-debug-build)
   - [3.6. Installing](#36-installing)
   - [3.7. Configuring](#37-configuring)
-  - [3.8. Updating host files](#38-updating-host-files)
+  - [3.8. Host files](#38-host-files)
+  - [3.9. MQTT](#39-mqtt)
 - [4. Dashboard](#4-dashboard)
 - [5. Contributing](#5-contributing)
   - [5.1. Work Flow](#51-work-flow)
@@ -35,7 +36,7 @@
 
 
 # 1. Introduction
-This is a port of G4KLX Jonathan Naylor's [ircddbGateway](https://github.com/g4klx/ircDDBGateway). It is wxWidgets free and has minimal dependencies to boost (header libs only) and libcurl. I plan to ad some features in the future
+This is a port of G4KLX Jonathan Naylor's [ircddbGateway](https://github.com/g4klx/ircDDBGateway). It is wxWidgets free and has minimal dependencies to boost (header libs only). I plan to ad some features in the future
 
 # 2. Current State
 ## 2.1. Code sanity
@@ -65,7 +66,7 @@ All the features found in ircddbGateway are supposed to be working. Except the o
 - DPlus, DExtra and G2 NAT Traversal using ircddb network as rendez-vous server. I.e. it is not required to open firewall ports for Callsign Routing or Gateway calls. however it is still recommended to do so. But NAT Traversal will bring more flexibility when operating on CGNAT (Mobile) Networks.
 - Forward RSMS1A app messages from/to  APRS-IS Network, yes you can send/receive messages to and from aprs. Yes, you can send messages to APRS stations and Vice Versa. Additionnally, part of the message is sent as Text Dat in the slow data. This allows you to read the message directly on your radio screen.
 - Repeater Link status is sent to APRS-IS as a status frame
-- Built-in download of hosts files
+- MQTT integration for logging, status publishing and remote control
 
 # 3. Building and installing
 ## 3.1. Initial setup
@@ -90,7 +91,7 @@ git checkout develop
 ## 3.4. Prerequisites and dependencies
 Before first time building you need to install dependencies and prerequisites
 ```
-sudo apt install build-essential libcurl4-openssl-dev libboost-dev bind9-host
+sudo apt install build-essential libboost-dev libmosquitto-dev nlohmann-json3-dev bind9-host
 ```
 If you are going to build with gpsd support, also install libgps-dev
 ```
@@ -113,7 +114,7 @@ Note that this will will add libl dependency. Building this way will output the 
 ## 3.6. Installing
 The program is meant to run as a systemd service. All bits an pieces are provided.
 ```
-sudo make install newhostfiles
+sudo make install
 ```
 ## 3.7. Configuring
 After installing you have to edit the configuration file. If you went with default paths, the config file is located in `/usr/local/etc/dstargateway.cfg`
@@ -129,13 +130,99 @@ sudo systemctl start dstargateway.service
 sudo systemctl stop dstargateway.service
 ```
 
-## 3.8. Updating host files
-To update host files, from within the source code directory, run
+## 3.8. Host files
+Host files provide the mapping between reflector names and their IP addresses. DStarGateway uses a single JSON file `DStar_Hosts.json` located in the data directory (default `/usr/local/share/dstargateway.d/`). This replaces the legacy per-protocol text files (`DCS_Hosts.txt`, `DExtra_Hosts.txt`, `DPlus_Hosts.txt`).
+
+The file is installed automatically by `make install`. DStarGateway periodically re-reads the host file from disk (default every 72 hours), or immediately when sent a `SIGUSR1` signal.
+
+### JSON Schema
+
+`DStar_Hosts.json` is a JSON array of reflector objects. Each object has the following fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Reflector callsign, e.g. `"DCS672"`, `"REF001"`, `"XRF757"` |
+| `reflector_type` | string | Yes | Protocol type: `"REF"` (DPlus), `"XRF"` (DExtra), or `"DCS"` |
+| `ipv4` | string or null | Yes | IPv4 address or hostname. Set to `null` to skip this entry |
+| `port` | number | No | Port number |
+| `locked` | boolean | No | When `true`, prevents ircDDB from overriding this address. Default `false` |
+
+Example:
+```json
+[
+    {
+        "name": "REF001",
+        "reflector_type": "REF",
+        "ipv4": "44.182.1.1",
+        "port": 20001,
+        "locked": false
+    },
+    {
+        "name": "DCS672",
+        "reflector_type": "DCS",
+        "ipv4": "212.48.199.210",
+        "port": 30051,
+        "locked": true
+    },
+    {
+        "name": "XRF757",
+        "reflector_type": "XRF",
+        "ipv4": "192.168.1.100",
+        "port": 30001
+    },
+    {
+        "name": "XRF999",
+        "reflector_type": "XRF",
+        "ipv4": null
+    }
+]
 ```
-sudo make newhostfiles
-sudo systemctl restart dstargateway.service
+
+When a reflector is not found in the host file, DStarGateway falls back to DNS resolution using `<name>.reflector.ircddb.net`.
+
+## 3.9. MQTT
+DStarGateway connects to an MQTT broker for logging, status publishing and remote control. The MQTT broker address and credentials are configured in the `[MQTT]` section of the configuration file.
+
+```ini
+[MQTT]
+Address=127.0.0.1
+Port=1883
+Keepalive=60
+Authenticate=false
+Username=
+Password=
+Name=dstar-gateway
 ```
-or juste configure and run the software and it will download latest host files.
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `Address` | `127.0.0.1` | MQTT broker hostname or IP |
+| `Port` | `1883` | MQTT broker port |
+| `Keepalive` | `60` | Keepalive timer in seconds (0–240) |
+| `Authenticate` | `false` | Enable MQTT username/password authentication |
+| `Username` | `mmdvm` | Username when authentication is enabled |
+| `Password` | `mmdvm` | Password when authentication is enabled |
+| `Name` | `dstar-gateway` | MQTT client identifier, also used as topic prefix |
+
+The log verbosity for MQTT is controlled separately in the `[Log]` section:
+```ini
+[Log]
+MQTTLevel=2
+```
+Valid values are 0 (None) through 6 (Fatal).
+
+### Topics
+
+DStarGateway publishes and subscribes to the following MQTT topics (prefixed with the configured `Name`):
+
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| `{Name}/log` | Publish | Log messages (filtered by `MQTTLevel`) |
+| `{Name}/json` | Publish | JSON status updates |
+| `{Name}/command` | Subscribe | Incoming remote control commands |
+| `{Name}/response` | Publish | Responses to remote control commands |
+| `aprs-gateway/aprs` | Publish | APRS frames forwarded from radio |
+
 # 4. Dashboard
 @johnhays K7VE has developed a nice lightweight NodeJS dashboard. Code and instructions can be found on his [GitHub](https://github.com/johnhays/dsgwdashboard). 
 
