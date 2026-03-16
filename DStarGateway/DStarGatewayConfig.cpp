@@ -239,7 +239,7 @@ bool CDStarGatewayConfig::loadRepeaters(const CConfig& cfg)
 		ret = cfg.getValue(section, "ReflectorAtStartup", repeater->reflectorAtStartup, !repeater->reflector.empty()) && ret;
 
 		std::string reconnect;
-		ret = cfg.getValue(section, "ReflectorReconnect", reconnect, "Mever", {"Never", "Fixed", "5", "10", "15", "20", "25", "30", "60", "90", "120", "180"}) && ret;
+		ret = cfg.getValue(section, "ReflectorReconnect", reconnect, "Never", {"Never", "Fixed", "5", "10", "15", "20", "25", "30", "60", "90", "120", "180"}) && ret;
 		if(ret) {
 			if (reconnect == "Never")		repeater->reflectorReconnect = RECONNECT_NEVER;
 			else if(reconnect == "5")		repeater->reflectorReconnect = RECONNECT_5MINS;

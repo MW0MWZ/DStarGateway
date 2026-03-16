@@ -229,7 +229,7 @@ bool CConfig::getValue(const std::string &section, const std::string& key, std::
     if(getValue(section, key, valueTemp, 0U, 2048, defaultValue)) {
         for(auto s : allowedValues) {
             if(isSameNoCase(s, valueTemp)) {
-                value = CUtils::toLower(valueTemp);
+                value = s;
                 return true;
             }
         }
