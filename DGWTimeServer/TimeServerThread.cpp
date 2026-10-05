@@ -61,7 +61,7 @@ CTimeServerThread::~CTimeServerThread()
 
 	m_data.clear();
 
-	delete[] m_ambeFileReader;
+	delete m_ambeFileReader;
 }
 
 void * CTimeServerThread::Entry()
@@ -987,7 +987,7 @@ bool CTimeServerThread::loadAMBE()
 	bool ret = m_ambeFileReader->read();
 
 	if (!ret) {
-		delete[] m_ambeFileReader;
+		delete m_ambeFileReader;
 		m_ambeFileReader = nullptr;
 		return false;
 	}
