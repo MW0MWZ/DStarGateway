@@ -635,6 +635,7 @@ void CDStarGatewayThread::processIrcDDB()
 				if (m_lastStatus != IS_CONNECTED) {
 					LogInfo("Connected to ircDDB");
 					m_lastStatus = IS_CONNECTED;
+					m_cache.clearUsers();	// may have missed users moving
 				}
 				break;
 			default:

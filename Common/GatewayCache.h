@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <unordered_map>
 #include <sys/socket.h>
@@ -36,7 +37,8 @@ public:
 	m_address(address),
 	m_protocol(DP_UNKNOWN),
 	m_addrLock(addrLock),
-	m_protoLock(false)
+	m_protoLock(false),
+	m_received(std::chrono::steady_clock::now())
 	{
 		if (protocol != DP_UNKNOWN) {
 			m_protocol  = protocol;
@@ -74,12 +76,30 @@ public:
 		}
 	}
 
+	// Hosts file and D-Plus entries are locked, only ircDDB entries are learned
+	bool isLocked() const
+	{
+		return m_addrLock || m_protoLock;
+	}
+
+	// Restart the lifetime, called whenever the entry is received
+	void touch()
+	{
+		m_received = std::chrono::steady_clock::now();
+	}
+
+	bool isExpired(std::chrono::steady_clock::duration lifetime) const
+	{
+		return std::chrono::steady_clock::now() - m_received > lifetime;
+	}
+
 private:
 	std::string       m_gateway;
 	in_addr        m_address;
 	DSTAR_PROTOCOL m_protocol;
 	bool           m_addrLock;
 	bool           m_protoLock;
+	std::chrono::steady_clock::time_point m_received;
 };
 
 class CGatewayCache {
@@ -90,6 +110,8 @@ public:
 	CGatewayRecord* find(const std::string& gateway);
 
 	void update(const std::string& gateway, const std::string& address, DSTAR_PROTOCOL protocol, bool addrLock, bool protoLock);
+
+	void prune();
 
 	unsigned int getCount() const;
 

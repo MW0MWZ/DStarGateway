@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <mutex>
 
@@ -144,9 +145,14 @@ public:
 	void updateRepeater(const std::string& repeater, const std::string& gateway, const std::string& address, DSTAR_PROTOCOL protocol, bool addrLock, bool protoLock);
 	void updateGateway(const std::string& gateway, const std::string& address, DSTAR_PROTOCOL protocol, bool addrLock, bool protoLock);
 
+	void clearUsers();
+
 private:
 	CUserCache     m_userCache;
 	CGatewayCache  m_gatewayCache;
 	CRepeaterCache m_repeaterCache;
 	std::mutex mux;
+	std::chrono::steady_clock::time_point m_lastPrune;
+
+	void pruneIfDue();
 };

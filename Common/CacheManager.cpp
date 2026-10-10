@@ -24,7 +24,8 @@
 CCacheManager::CCacheManager() :
 m_userCache(),
 m_gatewayCache(),
-m_repeaterCache()
+m_repeaterCache(),
+m_lastPrune(std::chrono::steady_clock::now())
 {
 }
 
@@ -66,8 +67,10 @@ CGatewayData *CCacheManager::findGateway(const std::string& gateway)
 {
 	mux.lock();
 	CGatewayRecord *gr = m_gatewayCache.find(gateway);
-	if (gr == NULL)
+	if (gr == NULL) {
+		mux.unlock();
 		return NULL;
+	}
 
 	CGatewayData *gatewaydata = new CGatewayData(gateway, gr->getAddress(), gr->getProtocol());
 	mux.unlock();
@@ -101,6 +104,8 @@ CRepeaterData* CCacheManager::findRepeater(const std::string& repeater)
 void CCacheManager::updateUser(const std::string& user, const std::string& repeater, const std::string& gateway, const std::string& address, const std::string& timestamp, DSTAR_PROTOCOL protocol, bool addrLock, bool protoLock)
 {
 	mux.lock();
+	pruneIfDue();
+
 	std::string repeater7 = repeater.substr(0, LONG_CALLSIGN_LENGTH - 1U);
 	std::string gateway7  = gateway.substr(0, LONG_CALLSIGN_LENGTH - 1U);
 
@@ -108,7 +113,7 @@ void CCacheManager::updateUser(const std::string& user, const std::string& repea
 
 	// Only store non-standard repeater-gateway pairs
 	if (repeater7.compare(gateway7))
-		m_repeaterCache.update(repeater, gateway);
+		m_repeaterCache.update(repeater, gateway, addrLock || protoLock);
 
 	m_gatewayCache.update(gateway, address, protocol, addrLock, protoLock);
 	mux.unlock();
@@ -117,12 +122,14 @@ void CCacheManager::updateUser(const std::string& user, const std::string& repea
 void CCacheManager::updateRepeater(const std::string& repeater, const std::string& gateway, const std::string& address, DSTAR_PROTOCOL protocol, bool addrLock, bool protoLock)
 {
 	mux.lock();
+	pruneIfDue();
+
 	std::string repeater7 = repeater.substr(0, LONG_CALLSIGN_LENGTH - 1U);
 	std::string gateway7  = gateway.substr(0, LONG_CALLSIGN_LENGTH - 1U);
 
 	// Only store non-standard repeater-gateway pairs
 	if (repeater7.compare(gateway7))
-		m_repeaterCache.update(repeater, gateway);
+		m_repeaterCache.update(repeater, gateway, addrLock || protoLock);
 
 	m_gatewayCache.update(gateway, address, protocol, addrLock, protoLock);
 	mux.unlock();
@@ -131,6 +138,28 @@ void CCacheManager::updateRepeater(const std::string& repeater, const std::strin
 void CCacheManager::updateGateway(const std::string& gateway, const std::string& address, DSTAR_PROTOCOL protocol, bool addrLock, bool protoLock)
 {
 	mux.lock();
+	pruneIfDue();
 	m_gatewayCache.update(gateway, address, protocol, addrLock, protoLock);
 	mux.unlock();
+}
+
+// Updates may have been missed while ircDDB was disconnected
+void CCacheManager::clearUsers()
+{
+	mux.lock();
+	m_userCache.clear();
+	mux.unlock();
+}
+
+// Drop expired entries so the caches don't grow forever, called with mux held
+void CCacheManager::pruneIfDue()
+{
+	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+	if (now - m_lastPrune < std::chrono::minutes(1))
+		return;
+
+	m_userCache.prune();
+	m_repeaterCache.prune();
+	m_gatewayCache.prune();
+	m_lastPrune = now;
 }

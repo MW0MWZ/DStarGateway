@@ -20,6 +20,9 @@
 
 #include "GatewayCache.h"
 
+// Learned gateway addresses can change, dynamic IPs
+const std::chrono::hours GATEWAY_LIFETIME(1);
+
 CGatewayCache::CGatewayCache()
 {
 }
@@ -32,22 +35,46 @@ CGatewayCache::~CGatewayCache()
 
 CGatewayRecord* CGatewayCache::find(const std::string& gateway)
 {
-	return m_cache[gateway];
+	std::unordered_map<std::string, CGatewayRecord *>::iterator it = m_cache.find(gateway);
+	if (it == m_cache.end())
+		return NULL;
+
+	if (!it->second->isLocked() && it->second->isExpired(GATEWAY_LIFETIME)) {
+		delete it->second;
+		m_cache.erase(it);
+		return NULL;
+	}
+
+	return it->second;
 }
 
 void CGatewayCache::update(const std::string& gateway, const std::string& address, DSTAR_PROTOCOL protocol, bool addrLock, bool protoLock)
 {
-	CGatewayRecord* rec = m_cache[gateway];
+	std::unordered_map<std::string, CGatewayRecord *>::iterator it = m_cache.find(gateway);
 
 	in_addr addr_in;
 	addr_in.s_addr = ::inet_addr(address.c_str());
 
-	if (rec == NULL)
+	if (it == m_cache.end()) {
 		// A brand new record is needed
 		m_cache[gateway] = new CGatewayRecord(gateway, addr_in, protocol, addrLock, protoLock);
-	else
+	} else {
 		// Update an existing record
-		rec->setData(addr_in, protocol, addrLock, protoLock);
+		it->second->setData(addr_in, protocol, addrLock, protoLock);
+		it->second->touch();
+	}
+}
+
+void CGatewayCache::prune()
+{
+	for (std::unordered_map<std::string, CGatewayRecord *>::iterator it = m_cache.begin(); it != m_cache.end();) {
+		if (!it->second->isLocked() && it->second->isExpired(GATEWAY_LIFETIME)) {
+			delete it->second;
+			it = m_cache.erase(it);
+		} else {
+			++it;
+		}
+	}
 }
 
 unsigned int CGatewayCache::getCount() const

@@ -20,6 +20,9 @@
 
 #include "RepeaterCache.h"
 
+// Repeaters rarely change gateway
+const std::chrono::hours REPEATER_LIFETIME(24);
+
 CRepeaterCache::CRepeaterCache()
 {
 }
@@ -32,19 +35,51 @@ CRepeaterCache::~CRepeaterCache()
 
 CRepeaterRecord* CRepeaterCache::find(const std::string& repeater)
 {
-	return m_cache[repeater];
+	std::unordered_map<std::string, CRepeaterRecord *>::iterator it = m_cache.find(repeater);
+	if (it == m_cache.end())
+		return NULL;
+
+	if (!it->second->isLocked() && it->second->isExpired(REPEATER_LIFETIME)) {
+		delete it->second;
+		m_cache.erase(it);
+		return NULL;
+	}
+
+	return it->second;
 }
 
-void CRepeaterCache::update(const std::string& repeater, const std::string& gateway)
+void CRepeaterCache::update(const std::string& repeater, const std::string& gateway, bool locked)
 {
-	CRepeaterRecord* rec = m_cache[repeater];
+	std::unordered_map<std::string, CRepeaterRecord *>::iterator it = m_cache.find(repeater);
 
-	if (rec == NULL)
+	if (it == m_cache.end()) {
 		// A brand new record is needed
-		m_cache[repeater] = new CRepeaterRecord(repeater, gateway);
-	else
-		// Update an existing record
-		rec->setGateway(gateway);
+		m_cache[repeater] = new CRepeaterRecord(repeater, gateway, locked);
+		return;
+	}
+
+	// ircDDB never overrides a local repeater
+	CRepeaterRecord* rec = it->second;
+	if (rec->isLocked() && !locked)
+		return;
+
+	// Update an existing record
+	rec->setGateway(gateway);
+	if (locked)
+		rec->lock();
+	rec->touch();
+}
+
+void CRepeaterCache::prune()
+{
+	for (std::unordered_map<std::string, CRepeaterRecord *>::iterator it = m_cache.begin(); it != m_cache.end();) {
+		if (!it->second->isLocked() && it->second->isExpired(REPEATER_LIFETIME)) {
+			delete it->second;
+			it = m_cache.erase(it);
+		} else {
+			++it;
+		}
+	}
 }
 
 unsigned int CRepeaterCache::getCount() const

@@ -20,6 +20,9 @@
 
 #include "UserCache.h"
 
+// Users move between repeaters, so re-query ircDDB once an entry is this old
+const std::chrono::minutes USER_LIFETIME(5);
+
 CUserCache::CUserCache()
 {
 }
@@ -33,21 +36,59 @@ CUserCache::~CUserCache()
 
 CUserRecord* CUserCache::find(const std::string& user)
 {
-	return m_cache[user];
+	std::unordered_map<std::string, CUserRecord *>::iterator it = m_cache.find(user);
+	if (it == m_cache.end())
+		return NULL;
+
+	if (it->second->isExpired(USER_LIFETIME)) {
+		delete it->second;
+		m_cache.erase(it);
+		return NULL;
+	}
+
+	return it->second;
 }
 
 void CUserCache::update(const std::string& user, const std::string& repeater, const std::string& timestamp)
 {
-	CUserRecord* rec = m_cache[user];
+	std::unordered_map<std::string, CUserRecord *>::iterator it = m_cache.find(user);
 
-	if (rec == NULL)
+	if (it == m_cache.end()) {
 		// A brand new record is needed
 		m_cache[user] = new CUserRecord(user, repeater, timestamp);
-	else if(timestamp.compare(rec->getTimeStamp()) > 0) {
+		return;
+	}
+
+	CUserRecord* rec = it->second;
+	int age = timestamp.compare(rec->getTimeStamp());
+	if (age > 0) {
 		// Update an existing record, but only if the received timestamp is newer
 		rec->setRepeater(repeater);
 		rec->setTimestamp(timestamp);
 	}
+
+	// An older report doesn't confirm where the user is now
+	if (age >= 0)
+		rec->touch();
+}
+
+void CUserCache::prune()
+{
+	for (std::unordered_map<std::string, CUserRecord *>::iterator it = m_cache.begin(); it != m_cache.end();) {
+		if (it->second->isExpired(USER_LIFETIME)) {
+			delete it->second;
+			it = m_cache.erase(it);
+		} else {
+			++it;
+		}
+	}
+}
+
+void CUserCache::clear()
+{
+	for (std::unordered_map<std::string, CUserRecord *>::iterator it = m_cache.begin(); it != m_cache.end(); ++it)
+		delete it->second;
+	m_cache.clear();
 }
 
 unsigned int CUserCache::getCount() const
