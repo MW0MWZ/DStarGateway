@@ -20,6 +20,7 @@
  */
 
 #include <cstdio>
+#include <stdexcept>
 #include "DTMF.h"
 #include "Log.h"
 
@@ -129,6 +130,17 @@ std::string CDTMF::translate()
 	std::string command = m_command;
 	m_command.clear();
 
+	// Last line of defence: a bad command must never crash the gateway
+	try {
+		return translateCommand(command);
+	} catch (const std::exception& e) {
+		LogWarning("DTMF command \"%s\" could not be parsed (%s), ignored", command.c_str(), e.what());
+		return std::string("");
+	}
+}
+
+std::string CDTMF::translateCommand(const std::string& command) const
+{
 	if (0 == command.size())
 		return std::string("");
 
@@ -138,8 +150,10 @@ std::string CDTMF::translate()
 	if (0 == command.compare("0"))
 		return "       I";
 
+#ifdef USE_CCS
 	if (0 == command.compare("A"))
 		return "CA      ";
+#endif
 
 	if (0 == command.compare("00"))
 		return "       I";
@@ -154,7 +168,11 @@ std::string CDTMF::translate()
 	else if (command.at(0) == 'D')
 		return processReflector("DCS", command.substr(1));
 	else
+#ifdef USE_CCS
 		return processCCS(command);
+#else
+		return std::string("");		// CCS is compiled out
+#endif
 }
 
 void CDTMF::reset()
@@ -168,6 +186,12 @@ void CDTMF::reset()
 	m_lastChar = ' ';
 }
 
+// Non-empty and all digits, so safe for std::stoul
+bool CDTMF::isNumber(const std::string& str)
+{
+	return !str.empty() && str.find_first_not_of("0123456789") == std::string::npos;
+}
+
 std::string CDTMF::processReflector(const std::string& prefix, const std::string& command) const
 {
 	unsigned int len = command.size();
@@ -177,7 +201,7 @@ std::string CDTMF::processReflector(const std::string& prefix, const std::string
 
 	char c = command.at(len - 1U);
 	if (c == 'A' || c == 'B' || c == 'C' || c == 'D') {
-		if (len < 2U || len > 4U)
+		if (len < 2U || len > 4U || !isNumber(command.substr(0, len-1U)))
 			return std::string("");
 
 		unsigned long n = std::stoul(command.substr(0, len-1U));
@@ -189,7 +213,7 @@ std::string CDTMF::processReflector(const std::string& prefix, const std::string
 	
 		return std::string(ostr);
 	} else {
-		if (len < 3U || len > 5U)
+		if (len < 3U || len > 5U || !isNumber(command.substr(0, len-2U)) || !isNumber(command.substr(len-2U)))
 			return std::string("");
 
 		unsigned long n1 = std::stoul(command.substr(0,len-2U));
@@ -212,85 +236,54 @@ std::string CDTMF::processReflector(const std::string& prefix, const std::string
 std::string CDTMF::processCCS(const std::string& command) const
 {
 	unsigned int len = command.size();
+	if (len == 0U)
+		return std::string("");
 
-	std::string out("");
+	// Digits, plus an optional trailing band letter
+	char band = command.at(len - 1U);
+	bool hasBand = band == 'A' || band == 'B' || band == 'C' || band == 'D';
+	std::string digits = hasBand ? command.substr(0U, len - 1U) : command;
+	if (!isNumber(digits))
+		return std::string("");
+
+	// Only these CCS7 formats are valid
+	unsigned int count = digits.size();
+	if (count != 3U && count != 4U && count != 6U && count != 7U)
+		return std::string("");
+
+	unsigned long n = std::stoul(digits);
+	if (n == 0UL)
+		return std::string("");
+
 	char ostr[32];
-	switch (len) {
-		case 3U: {
-				// CCS7 for local repeater without band
-				unsigned long n = std::stoul(command);
-				if (n == 0UL)
-					return out;
+	switch (count) {
+		case 3U:	// local repeater
+			if (hasBand)
+				snprintf(ostr, 32, "C%03lu%c   ", n, band);
+			else
 				snprintf(ostr, 32, "C%03lu    ", n);
-			}
 			break;
-		case 4U: {
-				char c = command.at(3U);
-				if (c == 'A' || c == 'B' || c == 'C' || c == 'D') {
-					// CCS7 for local repeater with band
-					unsigned long n = std::stoul(command.substr(0, 3));
-					if (n == 0UL)
-						return out;
-					snprintf(ostr, 32, "C%03lu%c   ", n, c);
-				} else {
-					// CCS7 for local user
-					unsigned long n = std::stoul(command);
-					if (n == 0UL)
-						return out;
-					snprintf(ostr, 32, "C%04lu   ", n);
-				}
-			}
+		case 4U:	// local user, or local hotspot with band
+			if (hasBand)
+				snprintf(ostr, 32, "C%04lu%c  ", n, band);
+			else
+				snprintf(ostr, 32, "C%04lu   ", n);
 			break;
-		case 5U: {
-				char c = command.at(4U);
-				if (c == 'A' || c == 'B' || c == 'C' || c == 'D') {
-					// CCS7 for local hostspot with band
-					unsigned long n = std::stoul(command.substr(0, 4));
-					if (n == 0UL)
-						return out;
-					snprintf(ostr, 32, "C%04lu%c  ", n, c);
-				}
-			}
-			break;
-		case 6U: {
-				// CCS7 for full repeater without band
-				unsigned long n = std::stoul(command);
-				if (n == 0UL)
-					return out;
+		case 6U:	// full repeater
+			if (hasBand)
+				snprintf(ostr, 32, "C%06lu%c", n, band);
+			else
 				snprintf(ostr, 32, "C%06lu ", n);
-			}
 			break;
-		case 7U: {
-				char c = command.at(6U);
-				if (c == 'A' || c == 'B' || c == 'C' || c == 'D') {
-					// CCS7 for full repeater with band
-					unsigned long n = std::stoul(command.substr(0, 6));
-					if (n == 0UL)
-						return out;
-					snprintf(ostr, 32, "C%06lu%c", n, c);
-				} else {
-					// CCS7 for full user or CCS7 for full hostpot without band
-					unsigned long n = std::stoul(command);
-					if (n == 0UL)
-						return out;
-					snprintf(ostr, 32, "C%07lu", n);
-				}
-			}
-			break;
-		case 8U: {
-				char c = command.at(7U);
-				if (c == 'A' || c == 'B' || c == 'C' || c == 'D') {
-					// CCS7 for full hotspot with band
-					unsigned long n = std::stoul(command.substr(0, 7));
-					if (n == 0UL)
-						return out;
-					snprintf(ostr, 32, "C%07lu%c", n, c);
-				}
-			}
+		case 7U:	// full user or hotspot, or full hotspot with band
+			if (hasBand)
+				snprintf(ostr, 32, "C%07lu%c", n, band);	// 9 chars, as in ircDDBGateway
+			else
+				snprintf(ostr, 32, "C%07lu", n);
 			break;
 		default:
-			break;
+			return std::string("");
 	}
-	out = ostr;
-	return out;
+
+	return std::string(ostr);
 }
