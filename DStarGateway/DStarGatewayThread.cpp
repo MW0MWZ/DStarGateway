@@ -660,13 +660,16 @@ void CDStarGatewayThread::processIrcDDB()
 					if (!res)
 						break;
 
-					if(m_logIRCDDB) {
-						if (!address.empty()) {
-						LogInfo("USER: %s %s %s %s", user.c_str(), repeater.c_str(), gateway.c_str(), address.c_str());
+					// Complete any pending G2 callsign route
+					CRepeaterHandler::resolveUser(user, repeater, gateway, address);
+
+					// Always cache, the switch only gates logging
+					if (!address.empty()) {
+						if (m_logIRCDDB)
+							LogInfo("USER: %s %s %s %s", user.c_str(), repeater.c_str(), gateway.c_str(), address.c_str());
 						m_cache.updateUser(user, repeater, gateway, address, timestamp, DP_DEXTRA, false, false);
-						} else {
-							LogInfo("USER: %s NOT FOUND", user.c_str());
-						}
+					} else if (m_logIRCDDB) {
+						LogInfo("USER: %s NOT FOUND", user.c_str());
 					}
 				}
 				break;
@@ -678,13 +681,13 @@ void CDStarGatewayThread::processIrcDDB()
 						break;
 
 					CRepeaterHandler::resolveRepeater(repeater, gateway, address, DP_DEXTRA);
-					if(m_logIRCDDB) {
-						if (!address.empty()) {
+
+					if (!address.empty()) {
+						if (m_logIRCDDB)
 							LogInfo("REPEATER: %s %s %s", repeater.c_str(), gateway.c_str(), address.c_str());
-							m_cache.updateRepeater(repeater, gateway, address, DP_DEXTRA, false, false);
-						} else {
-							LogInfo("REPEATER: %s NOT FOUND", repeater.c_str());
-						}
+						m_cache.updateRepeater(repeater, gateway, address, DP_DEXTRA, false, false);
+					} else if (m_logIRCDDB) {
+						LogInfo("REPEATER: %s NOT FOUND", repeater.c_str());
 					}
 				}
 				break;
@@ -698,13 +701,12 @@ void CDStarGatewayThread::processIrcDDB()
 					CDExtraHandler::gatewayUpdate(gateway, address);
 					CDPlusHandler::gatewayUpdate(gateway, address);
 
-					if(m_logIRCDDB) {
-						if (!address.empty()) {
+					if (!address.empty()) {
+						if (m_logIRCDDB)
 							LogInfo("GATEWAY: %s %s", gateway.c_str(), address.c_str());
-							m_cache.updateGateway(gateway, address, DP_DEXTRA, false, false);
-						} else {
-							LogInfo("GATEWAY: %s NOT FOUND", gateway.c_str());
-						}
+						m_cache.updateGateway(gateway, address, DP_DEXTRA, false, false);
+					} else if (m_logIRCDDB) {
+						LogInfo("GATEWAY: %s NOT FOUND", gateway.c_str());
 					}
 				}
 				break;
