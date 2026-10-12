@@ -53,8 +53,6 @@ CDDData::~CDDData()
 
 bool CDDData::setIcomRepeaterData(const unsigned char *data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort)
 {
-	assert(data != NULL);
-
 	// The DD payload starts at offset 60
 	if (length < 60U)
 		return false;
@@ -80,8 +78,6 @@ bool CDDData::setIcomRepeaterData(const unsigned char *data, unsigned int length
 
 bool CDDData::setHBRepeaterData(const unsigned char *data, unsigned int length, const in_addr& /*yourAddress*/, unsigned int /*yourPort*/)
 {
-	assert(data != NULL);
-
 	// The DD payload starts at offset 44; guard the length - 44 below
 	if (length < 60U)
 		return false;

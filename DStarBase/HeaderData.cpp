@@ -168,7 +168,6 @@ CHeaderData::~CHeaderData()
 
 bool CHeaderData::setIcomRepeaterData(const unsigned char *data, unsigned int length, bool check, const in_addr& yourAddress, unsigned int yourPort)
 {
-	assert(data != NULL);
 	if (length < 58U)
 		return false;
 
@@ -207,7 +206,6 @@ bool CHeaderData::setIcomRepeaterData(const unsigned char *data, unsigned int le
 
 bool CHeaderData::setHBRepeaterData(const unsigned char *data, unsigned int length, bool check, const in_addr& yourAddress, unsigned int yourPort)
 {
-	assert(data != NULL);
 	if (length < 49U)
 		return false;
 
@@ -243,8 +241,6 @@ bool CHeaderData::setHBRepeaterData(const unsigned char *data, unsigned int leng
 
 void CHeaderData::setDCSData(const unsigned char *data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-
 	if (length < 100U)
 		return;
 
@@ -267,8 +263,6 @@ void CHeaderData::setDCSData(const unsigned char *data, unsigned int length, con
 
 void CHeaderData::setCCSData(const unsigned char *data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-
 	if (length < 100U)
 		return;
 
@@ -287,7 +281,6 @@ void CHeaderData::setCCSData(const unsigned char *data, unsigned int length, con
 
 bool CHeaderData::setG2Data(const unsigned char *data, unsigned int length, bool check, const in_addr& yourAddress, unsigned int yourPort)
 {
-	assert(data != NULL);
 	if (length < 56U)
 		return false;
 
@@ -325,7 +318,6 @@ bool CHeaderData::setG2Data(const unsigned char *data, unsigned int length, bool
 
 bool CHeaderData::setDExtraData(const unsigned char *data, unsigned int length, bool check, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
 	if (length < 56U)
 		return false;
 
@@ -364,7 +356,6 @@ bool CHeaderData::setDExtraData(const unsigned char *data, unsigned int length, 
 
 bool CHeaderData::setDPlusData(const unsigned char *data, unsigned int length, bool check, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
 	if (length < 58U)
 		return false;
 
@@ -408,7 +399,6 @@ bool CHeaderData::setDPlusData(const unsigned char *data, unsigned int length, b
 
 bool CHeaderData::setDVTOOLData(const unsigned char* data, unsigned int length, bool check)
 {
-	assert(data != NULL);
 	if (length < RADIO_HEADER_LENGTH_BYTES)
 		return false;
 
@@ -870,7 +860,6 @@ void CHeaderData::setCQCQCQ()
 
 bool CHeaderData::setData(const unsigned char *data, unsigned int length, bool check)
 {
-	assert(data != NULL);
 	if (length < RADIO_HEADER_LENGTH_BYTES)
 		return false;
 

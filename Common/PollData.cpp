@@ -82,9 +82,6 @@ CPollData::~CPollData()
 
 bool CPollData::setDExtraData(const unsigned char* data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-	assert(yourPort > 0U);
-
 	// Drop a short datagram: the flag byte is at offset 8
 	if (length < 9U)
 		return false;
@@ -103,9 +100,6 @@ bool CPollData::setDExtraData(const unsigned char* data, unsigned int length, co
 
 bool CPollData::setDCSData(const unsigned char* data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-	assert(yourPort > 0U);
-
 	// Read fixed fields by offset, never strlen()/substr() over the buffer:
 	// a short poll used to throw std::out_of_range and abort the gateway.
 	switch (length) {
@@ -136,9 +130,6 @@ bool CPollData::setDCSData(const unsigned char* data, unsigned int length, const
 
 bool CPollData::setCCSData(const unsigned char* data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-	assert(yourPort > 0U);
-
 	if (length < 25U)
 		return false;
 
@@ -154,8 +145,6 @@ bool CPollData::setCCSData(const unsigned char* data, unsigned int length, const
 
 bool CPollData::setDPlusData(const unsigned char* /*data*/, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(yourPort > 0U);
-
 	m_length      = length;
 	m_yourAddress = yourAddress;
 	m_yourPort    = yourPort;

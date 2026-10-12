@@ -120,9 +120,6 @@ CConnectData::~CConnectData()
 
 bool CConnectData::setDExtraData(const unsigned char* data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-	assert(yourPort > 0U);
-
 	if (length < 11U)
 		return false;
 
@@ -167,9 +164,6 @@ bool CConnectData::setDExtraData(const unsigned char* data, unsigned int length,
 
 bool CConnectData::setDCSData(const unsigned char* data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-	assert(yourPort > 0U);
-
 	if (length < 11U)
 		return false;
 
@@ -216,9 +210,6 @@ bool CConnectData::setDCSData(const unsigned char* data, unsigned int length, co
 
 bool CConnectData::setCCSData(const unsigned char* data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-	assert(yourPort > 0U);
-
 	if (length < 14U)
 		return false;
 
@@ -245,9 +236,6 @@ bool CConnectData::setCCSData(const unsigned char* data, unsigned int length, co
 
 bool CConnectData::setDPlusData(const unsigned char* data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort, unsigned int myPort)
 {
-	assert(data != NULL);
-	assert(yourPort > 0U);
-
 	if (length < 5U)
 		return false;
 

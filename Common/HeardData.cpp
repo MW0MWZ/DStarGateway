@@ -61,8 +61,6 @@ CHeardData::~CHeardData()
 
 bool CHeardData::setIcomRepeaterData(const unsigned char *data, unsigned int length, const in_addr& address, unsigned int port)
 {
-	assert(data != NULL);
-
 	// Two 8-byte callsigns at offsets 10 and 18
 	if (length < 26U)
 		return false;
