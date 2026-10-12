@@ -27,7 +27,7 @@
 
 unsigned int ETHERNET_ADDRESS_LENGTH = 6U;
 
-unsigned int BUFFER_LENGTH = 2500U;
+static const unsigned int BUFFER_LENGTH = 2500U;
 
 CDDData::CDDData() :
 m_header(),
@@ -96,8 +96,8 @@ bool CDDData::setHBRepeaterData(const unsigned char *data, unsigned int length, 
 
 unsigned int CDDData::getIcomRepeaterData(unsigned char *data, unsigned int length)
 {
-	assert(data != NULL);
-	assert(length >= 32U);
+	if (length < 60U + m_length)
+		return 0U;
 
 	// This section is used when it's normal data (i.e. not an ack) for an Icom controller
 	data[0] = 'D';
@@ -141,8 +141,8 @@ unsigned int CDDData::getIcomRepeaterData(unsigned char *data, unsigned int leng
 
 unsigned int CDDData::getHBRepeaterData(unsigned char *data, unsigned int length)
 {
-	assert(data != NULL);
-	assert(length >= 1600U);
+	if (length < 44U + m_length)
+		return 0U;
 
 	data[0] = 'D';
 	data[1] = 'S';

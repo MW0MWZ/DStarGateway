@@ -77,8 +77,8 @@ bool CHeardData::setIcomRepeaterData(const unsigned char *data, unsigned int len
 
 unsigned int CHeardData::getCCSData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 100U);
+	if (length < 100U)
+		return 0U;
 
 	::memset(data, 0x00U, 100U);
 

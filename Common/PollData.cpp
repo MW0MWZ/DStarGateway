@@ -155,8 +155,8 @@ bool CPollData::setDPlusData(const unsigned char* /*data*/, unsigned int length,
 
 unsigned int CPollData::getDExtraData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 9U);
+	if (length < 9U)
+		return 0U;
 
 	::memset(data, ' ', LONG_CALLSIGN_LENGTH);
 
@@ -170,8 +170,8 @@ unsigned int CPollData::getDExtraData(unsigned char *data, unsigned int length) 
 
 unsigned int CPollData::getDCSData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 22U);
+	if (length < 22U)
+		return 0U;
 
 	if (m_direction == DIR_OUTGOING) {
 		::memset(data, ' ', 17U);
@@ -206,8 +206,8 @@ unsigned int CPollData::getDCSData(unsigned char *data, unsigned int length) con
 
 unsigned int CPollData::getCCSData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 25U);
+	if (length < 25U)
+		return 0U;
 
 	::memset(data, ' ', 25U);
 
@@ -224,8 +224,8 @@ unsigned int CPollData::getCCSData(unsigned char *data, unsigned int length) con
 
 unsigned int CPollData::getDPlusData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 3U);
+	if (length < 3U)
+		return 0U;
 
 	data[0U] = 0x03;
 	data[1U] = 0x60;

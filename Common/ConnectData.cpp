@@ -280,8 +280,8 @@ bool CConnectData::setDPlusData(const unsigned char* data, unsigned int length, 
 
 unsigned int CConnectData::getDExtraData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 11U);
+	if (length < 14U)
+		return 0U;
 
 	::memset(data, ' ', LONG_CALLSIGN_LENGTH);
 
@@ -325,8 +325,8 @@ unsigned int CConnectData::getDExtraData(unsigned char *data, unsigned int lengt
 
 unsigned int CConnectData::getDCSData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 519U);
+	if (length < 519U)
+		return 0U;
 
 	::memset(data, ' ', LONG_CALLSIGN_LENGTH);
 
@@ -398,8 +398,8 @@ unsigned int CConnectData::getDCSData(unsigned char *data, unsigned int length) 
 
 unsigned int CConnectData::getCCSData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 39U);
+	if (length < 39U)
+		return 0U;
 
 	::memset(data, ' ', 39U);
 
@@ -438,8 +438,8 @@ unsigned int CConnectData::getCCSData(unsigned char *data, unsigned int length) 
 
 unsigned int CConnectData::getDPlusData(unsigned char *data, unsigned int length) const
 {
-	assert(data != NULL);
-	assert(length >= 28U);
+	if (length < 28U)
+		return 0U;
 
 	switch (m_type) {
 		case CT_LINK1:
