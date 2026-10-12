@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <unordered_map>
 
@@ -28,7 +29,8 @@ public:
 	CUserRecord(const std::string& user, const std::string& repeater, const std::string& timestamp) :
 	m_user(user),
 	m_repeater(repeater),
-	m_timestamp(timestamp)
+	m_timestamp(timestamp),
+	m_received(std::chrono::steady_clock::now())
 	{
 	}
 
@@ -57,10 +59,22 @@ public:
 		m_timestamp = timestamp;
 	}
 
+	// Restart the lifetime, called whenever the entry is received
+	void touch()
+	{
+		m_received = std::chrono::steady_clock::now();
+	}
+
+	bool isExpired(std::chrono::steady_clock::duration lifetime) const
+	{
+		return std::chrono::steady_clock::now() - m_received > lifetime;
+	}
+
 private:
 	std::string m_user;
 	std::string m_repeater;
 	std::string m_timestamp;
+	std::chrono::steady_clock::time_point m_received;
 };
 
 class CUserCache {
@@ -71,6 +85,9 @@ public:
 	CUserRecord* find(const std::string& user);
 
 	void update(const std::string& user, const std::string& repeater, const std::string& timestamp);
+
+	void prune();
+	void clear();
 
 	unsigned int getCount() const;
 

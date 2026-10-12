@@ -17,6 +17,7 @@
  */
 
 #include <array>
+#include <string>
 #include <gtest/gtest.h>
 
 #include "DTMF.h"
@@ -55,7 +56,60 @@ namespace DTMFTests
             dtmf.decode(NULL_AMBE_DATA_BYTES, end);
     }
 
+    static const unsigned char* symbol(char key)
+    {
+        switch (key) {
+            case '0': return DTMF_SYM0; case '1': return DTMF_SYM1; case '2': return DTMF_SYM2;
+            case '3': return DTMF_SYM3; case '4': return DTMF_SYM4; case '5': return DTMF_SYM5;
+            case '6': return DTMF_SYM6; case '7': return DTMF_SYM7; case '8': return DTMF_SYM8;
+            case '9': return DTMF_SYM9; case 'A': return DTMF_SYMA; case 'B': return DTMF_SYMB;
+            case 'C': return DTMF_SYMC; case 'D': return DTMF_SYMD; case '*': return DTMF_SYMS;
+            default:  return DTMF_SYMH;
+        }
+    }
+
+    // Key a whole command, then end the transmission
+    static std::string send(const std::string& keys)
+    {
+        CDTMF dtmf;
+        for (char key : keys) {
+            decode4(dtmf, makeFrame(symbol(key)));
+            gap(dtmf);
+        }
+        gap(dtmf, 10, true);
+
+        return dtmf.translate();
+    }
+
     class DTMF_decode : public ::testing::Test {};
+
+    TEST_F(DTMF_decode, malformed_commands_are_ignored)
+    {
+        // These used to throw from std::stoul and take the gateway down
+        for (const char* keys : { "C12", "D#12", "#D67205", "#*030C", "B#5", "*1#C", "12348", "12" })
+            EXPECT_STREQ(send(keys).c_str(), "") << keys;
+    }
+
+    TEST_F(DTMF_decode, valid_commands_still_translate)
+    {
+        EXPECT_STREQ(send("D67205").c_str(), "DCS672EL");
+        EXPECT_STREQ(send("D307C").c_str(),  "DCS307CL");
+        EXPECT_STREQ(send("*030C").c_str(),  "REF030CL");
+        EXPECT_STREQ(send("B001A").c_str(),  "XRF001AL");
+        EXPECT_STREQ(send("#").c_str(),      "       U");
+        EXPECT_STREQ(send("0").c_str(),      "       I");
+        EXPECT_STREQ(send("00").c_str(),     "       I");
+        EXPECT_STREQ(send("**").c_str(),     "       L");
+    }
+
+#ifndef USE_CCS
+    TEST_F(DTMF_decode, ccs_commands_are_ignored_without_ccs)
+    {
+        EXPECT_STREQ(send("A").c_str(),    "");
+        EXPECT_STREQ(send("1234").c_str(), "");
+    }
+#endif
+
 
     TEST_F(DTMF_decode, decode_reflector_module_as_number)
     {

@@ -42,6 +42,9 @@ private:
 	unsigned int m_pressCount;
 	char         m_lastChar;
 
+	std::string translateCommand(const std::string& command) const;
+	static bool isNumber(const std::string& str);
+
 	std::string processReflector(const std::string& prefix, const std::string& command) const;
 	std::string processCCS(const std::string& command) const;
 };

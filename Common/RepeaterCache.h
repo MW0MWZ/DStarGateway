@@ -20,14 +20,17 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <unordered_map>
 
 class CRepeaterRecord {
 public:
-	CRepeaterRecord(const std::string& repeater, const std::string& gateway) :
+	CRepeaterRecord(const std::string& repeater, const std::string& gateway, bool locked) :
 	m_repeater(repeater),
-	m_gateway(gateway)
+	m_gateway(gateway),
+	m_locked(locked),
+	m_received(std::chrono::steady_clock::now())
 	{
 	}
 
@@ -46,9 +49,33 @@ public:
 		m_gateway = gateway;
 	}
 
+	// Local repeaters are locked, only ircDDB entries are learned
+	bool isLocked() const
+	{
+		return m_locked;
+	}
+
+	void lock()
+	{
+		m_locked = true;
+	}
+
+	// Restart the lifetime, called whenever the entry is received
+	void touch()
+	{
+		m_received = std::chrono::steady_clock::now();
+	}
+
+	bool isExpired(std::chrono::steady_clock::duration lifetime) const
+	{
+		return std::chrono::steady_clock::now() - m_received > lifetime;
+	}
+
 private:
 	std::string m_repeater;
 	std::string m_gateway;
+	bool        m_locked;
+	std::chrono::steady_clock::time_point m_received;
 };
 
 class CRepeaterCache {
@@ -58,7 +85,9 @@ public:
 
 	CRepeaterRecord* find(const std::string& repeater);
 
-	void update(const std::string& repeater, const std::string& gateway);
+	void update(const std::string& repeater, const std::string& gateway, bool locked);
+
+	void prune();
 
 	unsigned int getCount() const;
 
