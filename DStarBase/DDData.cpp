@@ -54,13 +54,21 @@ CDDData::~CDDData()
 bool CDDData::setIcomRepeaterData(const unsigned char *data, unsigned int length, const in_addr& yourAddress, unsigned int yourPort)
 {
 	assert(data != NULL);
-	assert(length >= 29U);
+
+	// The DD payload starts at offset 60
+	if (length < 60U)
+		return false;
 
 	bool ret = m_header.setIcomRepeaterData(data, length, true, yourAddress, yourPort);
 	if (!ret)
 		return false;
 
 	m_length = data[59] * 256U + data[58];
+
+	// Never read past the datagram or the frame buffer
+	unsigned int avail = length - 60U;
+	if (m_length > avail)
+		m_length = avail;
 
 	if (m_length > BUFFER_LENGTH)
 		m_length = BUFFER_LENGTH;
@@ -73,7 +81,10 @@ bool CDDData::setIcomRepeaterData(const unsigned char *data, unsigned int length
 bool CDDData::setHBRepeaterData(const unsigned char *data, unsigned int length, const in_addr& /*yourAddress*/, unsigned int /*yourPort*/)
 {
 	assert(data != NULL);
-	assert(length >= 60U);
+
+	// The DD payload starts at offset 44; guard the length - 44 below
+	if (length < 60U)
+		return false;
 
 	m_header.setData(data, length, false);
 

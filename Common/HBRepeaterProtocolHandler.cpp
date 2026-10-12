@@ -187,7 +187,15 @@ CPollData* CHBRepeaterProtocolHandler::readPoll()
 	if (m_type != RT_POLL)
 		return NULL;
 
-	std::string text = std::string((char*)(m_buffer + 5U));
+	// The poll text follows the 5-byte header; bound it by the datagram so
+	// we never strlen() past the receive buffer
+	if (m_length <= 5U)
+		return NULL;
+
+	std::string text((char*)(m_buffer + 5U), m_length - 5U);
+	size_t end = text.find('\0');
+	if (end != std::string::npos)
+		text.resize(end);
 
 	return new CPollData(text, m_address, m_port, m_socket.getPort());
 }
